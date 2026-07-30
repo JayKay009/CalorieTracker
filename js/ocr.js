@@ -225,56 +225,60 @@ async function handleScanRead() {
   }
 }
 
-function scanResultRow(label, value, unit) {
-  const display = value === null || value === undefined ? 'Not found' : `${round(value)}${unit || ''}`;
-  return `
-    <div class="log-item">
-      <div><div class="name">${label}</div></div>
-      <div class="kcal">${display}</div>
-    </div>`;
+function scanResultEls() {
+  return {
+    servingAmount: document.getElementById('scan-serving-amount'),
+    servingUnit: document.getElementById('scan-serving-unit'),
+    calories: document.getElementById('scan-calories'),
+    protein: document.getElementById('scan-protein'),
+    carbs: document.getElementById('scan-carbs'),
+    fat: document.getElementById('scan-fat'),
+    fiber: document.getElementById('scan-fiber'),
+    sugar: document.getElementById('scan-sugar'),
+    sodium: document.getElementById('scan-sodium'),
+  };
 }
 
+/** Populates the editable results fields from the parse — blank (not 0) for anything not found, so it's obvious what needs a manual fill-in rather than looking like a confirmed zero. */
 function renderScanResults(parsed) {
-  const listEl = document.getElementById('scan-results-list');
-  const servingText = parsed.servingAmount
-    ? `${round(parsed.servingAmount)}${parsed.servingUnit || ''}`
-    : 'Not found — defaulting to 100g, double-check this';
+  const els = scanResultEls();
+  const blank = (v) => (v === null || v === undefined ? '' : round(v));
 
-  listEl.innerHTML = [
-    `<div class="log-item"><div><div class="name">Serving size</div></div><div class="kcal">${servingText}</div></div>`,
-    scanResultRow('Calories', parsed.calories),
-    scanResultRow('Protein', parsed.protein, 'g'),
-    scanResultRow('Carbs', parsed.carbs, 'g'),
-    scanResultRow('Fat', parsed.fat, 'g'),
-    scanResultRow('Fiber', parsed.fiber, 'g'),
-    scanResultRow('Sugar', parsed.sugar, 'g'),
-    scanResultRow('Sodium', parsed.sodium, 'mg'),
-  ].join('');
+  els.servingAmount.value = blank(parsed.servingAmount) === '' ? 100 : round(parsed.servingAmount);
+  els.servingUnit.value = parsed.servingUnit || 'g';
+  els.calories.value = blank(parsed.calories);
+  els.protein.value = blank(parsed.protein);
+  els.carbs.value = blank(parsed.carbs);
+  els.fat.value = blank(parsed.fat);
+  els.fiber.value = blank(parsed.fiber);
+  els.sugar.value = blank(parsed.sugar);
+  els.sodium.value = blank(parsed.sodium);
 
-  if (parsed.sodiumFromSalt) {
-    listEl.innerHTML += '<p class="field-hint">Sodium was estimated from a salt/zout reading (salt g × 400) — double-check this one.</p>';
-  }
+  document.getElementById('scan-salt-note').hidden = !parsed.sodiumFromSalt;
+}
+
+function numOrZero(input) {
+  const v = parseFloat(input.value);
+  return Number.isFinite(v) ? v : 0;
 }
 
 function handleScanUse() {
-  const p = scanState.parsed;
-  if (!p) return;
-
-  const servingAmount = p.servingAmount || 100;
-  const servingUnit = p.servingUnit || 'g';
+  const els = scanResultEls();
+  const servingAmount = parseFloat(els.servingAmount.value) || 100;
+  const servingUnit = els.servingUnit.value || 'g';
   const scaleTo100 = 100 / servingAmount;
 
   const syntheticItem = {
     source: 'ocr',
     name: '',
     default_serving: { amount: servingAmount, unit: servingUnit },
-    calories_per_100: (p.calories || 0) * scaleTo100,
-    protein_per_100: (p.protein || 0) * scaleTo100,
-    carbs_per_100: (p.carbs || 0) * scaleTo100,
-    fat_per_100: (p.fat || 0) * scaleTo100,
-    fiber_per_100: (p.fiber || 0) * scaleTo100,
-    sugar_per_100: (p.sugar || 0) * scaleTo100,
-    sodium_mg_per_100: (p.sodium || 0) * scaleTo100,
+    calories_per_100: numOrZero(els.calories) * scaleTo100,
+    protein_per_100: numOrZero(els.protein) * scaleTo100,
+    carbs_per_100: numOrZero(els.carbs) * scaleTo100,
+    fat_per_100: numOrZero(els.fat) * scaleTo100,
+    fiber_per_100: numOrZero(els.fiber) * scaleTo100,
+    sugar_per_100: numOrZero(els.sugar) * scaleTo100,
+    sodium_mg_per_100: numOrZero(els.sodium) * scaleTo100,
   };
 
   openManualForm(syntheticItem);

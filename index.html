@@ -156,10 +156,67 @@
 
     <div id="scan-results-panel" hidden>
       <p class="section-label">Here's what was read off the label</p>
-      <p class="field-hint">Nothing is saved yet — you'll land on the normal add-food form with these as a starting point, and can fix anything that's wrong before saving.</p>
-      <div class="log-list" id="scan-results-list"></div>
+      <p class="field-hint">Fix anything that's wrong or missing below — nothing is saved until the next screen.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="scan-serving-amount">Serving size</label>
+          <input type="number" id="scan-serving-amount" min="0" step="any" inputmode="decimal">
+        </div>
+        <div class="field field--unit">
+          <label for="scan-serving-unit">Unit</label>
+          <select id="scan-serving-unit">
+            <optgroup label="Weight">
+              <option value="g">g</option>
+              <option value="oz">oz</option>
+              <option value="lb">lb</option>
+            </optgroup>
+            <optgroup label="Volume">
+              <option value="ml">ml</option>
+              <option value="tsp">tsp</option>
+              <option value="tbsp">tbsp</option>
+              <option value="fl_oz">fl oz</option>
+              <option value="cup">cup</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+
+      <div class="field field--hero">
+        <label for="scan-calories">Calories</label>
+        <input type="number" id="scan-calories" min="0" step="any" inputmode="decimal" class="hero-input">
+      </div>
+
+      <div class="macro-grid">
+        <div class="field">
+          <label for="scan-protein">Protein (g)</label>
+          <input type="number" id="scan-protein" min="0" step="any" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="scan-carbs">Carbs (g)</label>
+          <input type="number" id="scan-carbs" min="0" step="any" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="scan-fat">Fat (g)</label>
+          <input type="number" id="scan-fat" min="0" step="any" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="scan-fiber">Fiber (g)</label>
+          <input type="number" id="scan-fiber" min="0" step="any" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="scan-sugar">Sugar (g)</label>
+          <input type="number" id="scan-sugar" min="0" step="any" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="scan-sodium">Sodium (mg)</label>
+          <input type="number" id="scan-sodium" min="0" step="any" inputmode="decimal">
+        </div>
+      </div>
+      <p class="field-hint" id="scan-salt-note" hidden>Sodium was estimated from a salt/zout reading (salt g × 400) — double-check this one.</p>
+
       <div class="form-actions">
-        <button type="button" class="btn-primary btn-block" id="scan-use-btn">Use these values</button>
+        <button type="button" class="btn-primary btn-block" id="scan-use-btn">Continue to save</button>
         <button type="button" class="btn-text btn-block" id="scan-rescan-btn">Try a different photo</button>
       </div>
     </div>
