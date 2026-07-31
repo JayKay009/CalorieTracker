@@ -24,6 +24,27 @@ python3 -m http.server 8000
 
 No environment variables, no secrets, no server config — it's just static files.
 
+## Recent fixes (this round)
+
+- **OCR on light-text/dark-background labels**: images are now auto-converted
+  to grayscale and inverted when dark-dominant, before OCR runs. This is
+  color-agnostic (works on brightness, not any specific color) so it doesn't
+  matter what the actual background color is.
+- **Scan results are now directly editable** — no more "not found" dead
+  ends; every field is a normal input, pre-filled where OCR found something,
+  blank where it didn't, so you can just fill in the gaps and continue.
+- **Meal Builder's food search no longer uses a native `<datalist>`** — it's
+  a custom-built dropdown now, since `<datalist>` suggestion rendering is
+  unreliable on several mobile browsers (notably Chrome on Android).
+- **Saving a food now gives clear feedback** (a toast) and navigates home
+  instead of silently landing back on the library. The save itself is also
+  now wrapped in a verify-after-write check, so a real failure surfaces as
+  an error message instead of failing silently.
+- **Quick-add meals**: in Meal Builder, check "save as quick-add meal" to
+  store the current plate as a named, reusable combo (e.g. "Morning
+  coffee"). It shows up under the new **Meals** tab in the Library — tap it
+  to log every item in one tap, using each food's current nutrition data.
+
 ## Project status
 
 All planned features are built:

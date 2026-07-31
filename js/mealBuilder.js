@@ -14,6 +14,7 @@
 
 let plateSession = null; // { items: [], runningTotal: number }
 let plateSelectedFood = null;
+let plateFoodCache = [];
 
 function resetPlateSession() {
   plateSession = { items: [], runningTotal: 0 };
@@ -25,6 +26,10 @@ function resetPlateSession() {
   document.getElementById('plate-item-error').hidden = true;
   document.getElementById('plate-item-preview').textContent = '—';
   document.getElementById('build-meal-label').value = '';
+  document.getElementById('save-as-meal-toggle').checked = false;
+  document.getElementById('save-as-meal-name-field').hidden = true;
+  document.getElementById('save-as-meal-name').value = '';
+  hidePlateFoodDropdown();
   renderPlateItems();
 }
 
@@ -36,17 +41,47 @@ function computePlateItemWeight(reading, previousTotal, userForcedZeroed) {
   return { weight, autoZeroed, zeroed };
 }
 
-async function populatePlateFoodDatalist() {
-  const items = await PlateDB.getAllFoodItems();
-  const datalist = document.getElementById('plate-food-list');
-  // Map name -> most-recently-updated item, so the datalist stays simple
-  // (typed name -> single food) even if names collide; last-updated wins.
-  const byName = {};
-  items
-    .sort((a, b) => (a.updated_at || '').localeCompare(b.updated_at || ''))
-    .forEach((i) => { byName[i.name] = i; });
-  window._plateFoodByName = byName;
-  datalist.innerHTML = items.map((i) => `<option value="${escapeHtml(i.name)}"></option>`).join('');
+/* ============================================
+   Food picker — a custom dropdown built in JS rather than a native
+   <datalist>, since datalist rendering/suggestion behavior is unreliable
+   on several mobile browsers (notably Chrome on Android/Pixel, where the
+   suggestion list often doesn't appear at all).
+   ============================================ */
+
+function findFoodByExactName(name) {
+  const lower = name.trim().toLowerCase();
+  return plateFoodCache.find((f) => f.name.toLowerCase() === lower) || null;
+}
+
+function hidePlateFoodDropdown() {
+  const dropdown = document.getElementById('plate-food-dropdown');
+  dropdown.hidden = true;
+}
+
+function renderPlateFoodDropdown(query) {
+  const dropdown = document.getElementById('plate-food-dropdown');
+  const q = query.trim().toLowerCase();
+
+  if (!q) {
+    hidePlateFoodDropdown();
+    return;
+  }
+
+  const matches = plateFoodCache.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 8);
+  dropdown.innerHTML = matches.length
+    ? matches.map((f) => `<div class="autocomplete-option" data-id="${f.id}">${escapeHtml(f.name)}</div>`).join('')
+    : '<div class="autocomplete-empty">No matching foods in your library.</div>';
+  dropdown.hidden = false;
+}
+
+function selectPlateFoodById(id) {
+  const food = plateFoodCache.find((f) => f.id === id);
+  if (!food) return;
+  plateSelectedFood = food;
+  document.getElementById('plate-food-search').value = food.name;
+  hidePlateFoodDropdown();
+  updatePlateItemPreview();
+  document.getElementById('plate-reading').focus();
 }
 
 function updatePlateItemPreview() {
@@ -55,14 +90,14 @@ function updatePlateItemPreview() {
   errorEl.hidden = true;
 
   const name = document.getElementById('plate-food-search').value.trim();
-  const food = (window._plateFoodByName || {})[name];
-  plateSelectedFood = food || null;
+  const food = plateSelectedFood && plateSelectedFood.name === name ? plateSelectedFood : findFoodByExactName(name);
+  plateSelectedFood = food;
 
   const readingInput = document.getElementById('plate-reading');
   const reading = parseFloat(readingInput.value);
 
   if (!food) {
-    previewEl.textContent = name ? 'Pick a food from your library (type to search).' : '—';
+    previewEl.textContent = name ? 'Pick a food from the list below (type to search).' : '—';
     return { valid: false };
   }
   if (!Number.isFinite(reading) || reading < 0) {
@@ -164,6 +199,7 @@ function handlePlateConfirmItem() {
   document.getElementById('plate-item-preview').textContent = '—';
   document.getElementById('plate-item-error').hidden = true;
   plateSelectedFood = null;
+  hidePlateFoodDropdown();
 
   renderPlateItems();
 }
@@ -182,6 +218,14 @@ async function handleFinishMeal() {
   const groupId = PlateDB.uid();
   const date = todayDateStr();
   const now = new Date().toISOString();
+
+  const saveAsMeal = document.getElementById('save-as-meal-toggle').checked;
+  const mealName = document.getElementById('save-as-meal-name').value.trim();
+  if (saveAsMeal && !mealName) {
+    document.getElementById('plate-item-error').textContent = 'Give the quick-add meal a name, or uncheck "save as quick-add meal".';
+    document.getElementById('plate-item-error').hidden = false;
+    return;
+  }
 
   for (const item of plateSession.items) {
     await PlateDB.saveLogEntry({
@@ -205,6 +249,17 @@ async function handleFinishMeal() {
     await PlateDB.markFoodUsed(item.food_item_id);
   }
 
+  if (saveAsMeal) {
+    await PlateDB.saveMealTemplate({
+      name: mealName,
+      meal_label: mealLabel,
+      items: plateSession.items.map((i) => ({ food_item_id: i.food_item_id, name: i.name, weight: i.weight })),
+    });
+    showToast(`Saved "${mealName}" as a quick-add meal`);
+  } else {
+    showToast('Meal logged.');
+  }
+
   resetPlateSession();
   showView('today');
 }
@@ -216,7 +271,27 @@ function handleCancelMeal() {
 }
 
 function wireMealBuilder() {
-  document.getElementById('plate-food-search').addEventListener('input', updatePlateItemPreview);
+  const searchInput = document.getElementById('plate-food-search');
+
+  searchInput.addEventListener('input', (evt) => {
+    plateSelectedFood = null; // typing invalidates whatever was previously selected
+    renderPlateFoodDropdown(evt.target.value);
+    updatePlateItemPreview();
+  });
+  searchInput.addEventListener('focus', () => {
+    if (searchInput.value.trim()) renderPlateFoodDropdown(searchInput.value);
+  });
+  searchInput.addEventListener('blur', () => {
+    // Delay so a click on a dropdown option (below) registers before we hide it.
+    setTimeout(hidePlateFoodDropdown, 200);
+  });
+
+  document.getElementById('plate-food-dropdown').addEventListener('click', (evt) => {
+    const opt = evt.target.closest('.autocomplete-option[data-id]');
+    if (!opt) return;
+    selectPlateFoodById(opt.dataset.id);
+  });
+
   document.getElementById('plate-reading').addEventListener('input', updatePlateItemPreview);
   document.getElementById('plate-zeroed-toggle').addEventListener('change', (evt) => {
     evt.target.dataset.userTouched = 'true';
@@ -225,6 +300,10 @@ function wireMealBuilder() {
   document.getElementById('plate-confirm-item-btn').addEventListener('click', handlePlateConfirmItem);
   document.getElementById('finish-meal-btn').addEventListener('click', handleFinishMeal);
   document.getElementById('cancel-meal-btn').addEventListener('click', handleCancelMeal);
+  document.getElementById('save-as-meal-toggle').addEventListener('change', (evt) => {
+    document.getElementById('save-as-meal-name-field').hidden = !evt.target.checked;
+    if (evt.target.checked) document.getElementById('save-as-meal-name').focus();
+  });
 
   document.getElementById('plate-items-list').addEventListener('click', (evt) => {
     const btn = evt.target.closest('[data-remove-index]');
@@ -236,6 +315,6 @@ function wireMealBuilder() {
 /** Called from showView() whenever the Build view is opened. */
 async function enterMealBuilder() {
   if (!plateSession) resetPlateSession();
-  await populatePlateFoodDatalist();
+  plateFoodCache = await PlateDB.getAllFoodItems();
   renderPlateItems();
 }

@@ -59,6 +59,45 @@ function downscaleImageToCanvas(file, maxDim = 1400) {
   });
 }
 
+/**
+ * Converts to grayscale and inverts if the image is dark-dominant (light
+ * text on a dark/colored background — common on branded packaging). This is
+ * color-agnostic: it works off overall brightness, not any specific color,
+ * so it doesn't matter whether the background is blue, red, black, etc.
+ * OCR engines are trained overwhelmingly on dark-text-on-light-background,
+ * so light-on-dark labels often come back completely empty without this.
+ */
+function preprocessCanvasForOcr(canvas) {
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const inverted = grayscaleAndMaybeInvert(imageData.data);
+  ctx.putImageData(imageData, 0, 0);
+  return { canvas, inverted };
+}
+
+/** Pure pixel-buffer transform, factored out so it's testable without a real canvas. Mutates `data` in place (RGBA Uint8ClampedArray-like) and returns whether it inverted. */
+function grayscaleAndMaybeInvert(data) {
+  const pixelCount = data.length / 4;
+  let totalLuminance = 0;
+  const luminances = new Array(pixelCount);
+
+  for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+    const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    luminances[p] = lum;
+    totalLuminance += lum;
+  }
+
+  const avgLuminance = totalLuminance / pixelCount;
+  const shouldInvert = avgLuminance < 128;
+
+  for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+    const gray = shouldInvert ? 255 - luminances[p] : luminances[p];
+    data[i] = data[i + 1] = data[i + 2] = gray;
+  }
+
+  return shouldInvert;
+}
+
 /* ============================================
    Label text parsing (heuristic — see file header)
    ============================================ */
@@ -203,8 +242,9 @@ async function handleScanRead() {
 
   try {
     const [Tesseract, canvas] = await Promise.all([loadTesseract(), downscaleImageToCanvas(scanState.file)]);
+    const { inverted } = preprocessCanvasForOcr(canvas);
 
-    setScanStatus('Reading label (English + Dutch)…');
+    setScanStatus(inverted ? 'Reading label (light-on-dark detected)…' : 'Reading label (English + Dutch)…');
     const { data } = await Tesseract.recognize(canvas, 'eng+nld', {
       logger: (m) => {
         if (m.status === 'recognizing text' && typeof m.progress === 'number') {

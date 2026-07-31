@@ -26,6 +26,23 @@ function formatDateHeading() {
   return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
+function showToast(message) {
+  let el = document.getElementById('app-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'app-toast';
+    el.className = 'app-toast';
+    document.querySelector('.app-shell').appendChild(el);
+  }
+  el.textContent = message;
+  el.classList.remove('is-visible');
+  // Force reflow so re-triggering the animation works if a toast is already showing.
+  void el.offsetWidth;
+  el.classList.add('is-visible');
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => el.classList.remove('is-visible'), 2600);
+}
+
 function showView(name) {
   if (!VIEWS.includes(name)) return;
 
@@ -160,12 +177,49 @@ const LIBRARY_EMPTY_MESSAGES = {
   all: 'Your library is empty. Anything you scan or add manually will be saved here for quick reuse.',
   favorites: 'No favorites yet. Tap the star on any food to add it here.',
   recent: "Nothing logged yet — foods you've used will show up here.",
+  meals: 'No quick-add meals yet. Build one in "Build a meal" and check "save as quick-add meal".',
 };
 
-async function renderLibrary() {
-  const items = await getVisibleLibraryItems();
-  const listEl = document.getElementById('library-list');
+const LIBRARY_HINTS = {
+  all: 'Tap a food to log it to today. Use the star to favorite, the pencil to edit.',
+  favorites: 'Tap a food to log it to today. Use the star to favorite, the pencil to edit.',
+  recent: 'Tap a food to log it to today. Use the star to favorite, the pencil to edit.',
+  meals: 'Tap a meal to log all its items to today instantly. Use the trash icon to remove it.',
+};
 
+function mealTemplateRowHtml(meal) {
+  return `
+    <div class="log-item is-tappable" data-type="meal" data-id="${meal.id}" role="button" tabindex="0">
+      <div>
+        <div class="name">${escapeHtml(meal.name)}</div>
+        <div class="detail">${meal.items.length} item${meal.items.length === 1 ? '' : 's'}${meal.meal_label ? ' · ' + meal.meal_label[0].toUpperCase() + meal.meal_label.slice(1) : ''}</div>
+      </div>
+      <div class="log-item-actions">
+        <button type="button" class="row-icon-btn" data-action="delete-meal" data-id="${meal.id}" aria-label="Delete this quick-add meal">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+        </button>
+      </div>
+    </div>`;
+}
+
+async function renderLibrary() {
+  const listEl = document.getElementById('library-list');
+  document.getElementById('library-hint').textContent = LIBRARY_HINTS[libraryFilter];
+
+  if (libraryFilter === 'meals') {
+    const meals = await PlateDB.getAllMealTemplates();
+    const searchInput = document.getElementById('library-search');
+    const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const filtered = (q ? meals.filter((m) => m.name.toLowerCase().includes(q)) : meals)
+      .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+    listEl.innerHTML = filtered.length
+      ? filtered.map(mealTemplateRowHtml).join('')
+      : `<p class="empty-state">${q ? 'No matches.' : LIBRARY_EMPTY_MESSAGES.meals}</p>`;
+    return;
+  }
+
+  const items = await getVisibleLibraryItems();
   if (items.length === 0) {
     const searchInput = document.getElementById('library-search');
     const hasQuery = searchInput && searchInput.value.trim();
@@ -186,6 +240,51 @@ function wireLibraryTabs() {
   });
 }
 
+/** Logs every item in a saved meal template to today, using each food's *current* nutrition data (so edits to a food since the template was saved are reflected). */
+async function logMealTemplateNow(template) {
+  const groupId = PlateDB.uid();
+  const date = todayDateStr();
+  const now = new Date().toISOString();
+  let loggedCount = 0;
+
+  for (const templateItem of template.items) {
+    const food = await PlateDB.getFoodItem(templateItem.food_item_id);
+    if (!food) continue; // food was deleted from the library since this template was saved
+    const scale = templateItem.weight / 100;
+    await PlateDB.saveLogEntry({
+      date,
+      food_item_id: food.id,
+      name: food.name,
+      quantity: templateItem.weight,
+      unit: 'g',
+      meal_label: template.meal_label,
+      meal_group_id: groupId,
+      serving_display: `${round(templateItem.weight)}g`,
+      calories: (food.calories_per_100 || 0) * scale,
+      protein_g: (food.protein_per_100 || 0) * scale,
+      carbs_g: (food.carbs_per_100 || 0) * scale,
+      fat_g: (food.fat_per_100 || 0) * scale,
+      fiber_g: (food.fiber_per_100 || 0) * scale,
+      sugar_g: (food.sugar_per_100 || 0) * scale,
+      sodium_mg: (food.sodium_mg_per_100 || 0) * scale,
+      logged_at: now,
+    });
+    await PlateDB.markFoodUsed(food.id);
+    loggedCount++;
+  }
+
+  if (loggedCount === 0) {
+    alert(`Couldn't log "${template.name}" — the foods it used seem to have been removed from your library.`);
+    return;
+  }
+  if (loggedCount < template.items.length) {
+    showToast(`Logged "${template.name}" (${loggedCount}/${template.items.length} items — some were missing)`);
+  } else {
+    showToast(`Logged "${template.name}"`);
+  }
+  showView('today');
+}
+
 async function handleLibraryListClick(evt) {
   const actionBtn = evt.target.closest('.row-icon-btn');
   if (actionBtn) {
@@ -197,12 +296,24 @@ async function handleLibraryListClick(evt) {
     } else if (actionBtn.dataset.action === 'edit') {
       const item = await PlateDB.getFoodItem(id);
       if (item) openManualForm(item);
+    } else if (actionBtn.dataset.action === 'delete-meal') {
+      if (confirm('Remove this quick-add meal? This does not affect anything already logged.')) {
+        await PlateDB.deleteMealTemplate(id);
+        renderLibrary();
+      }
     }
     return;
   }
 
   const row = evt.target.closest('.log-item[data-id]');
   if (!row) return;
+
+  if (row.dataset.type === 'meal') {
+    const template = (await PlateDB.getAllMealTemplates()).find((m) => m.id === row.dataset.id);
+    if (template) logMealTemplateNow(template);
+    return;
+  }
+
   const item = await PlateDB.getFoodItem(row.dataset.id);
   if (item) openLogSheet(item);
 }
@@ -347,8 +458,22 @@ async function handleFoodFormSubmit(evt) {
     sodium_mg_per_100: num(els.sodium) * scaleTo100,
   };
 
-  await PlateDB.saveFoodItem(record);
-  showView('library');
+  try {
+    const saved = await PlateDB.saveFoodItem(record);
+    // Read it back rather than trusting the write silently succeeded —
+    // if this ever throws or comes back empty, something is genuinely wrong
+    // and the person needs to see that, not a form that just quietly resets.
+    const confirmed = await PlateDB.getFoodItem(saved.id);
+    if (!confirmed) throw new Error('Save did not stick — please try again.');
+  } catch (err) {
+    console.error('Failed to save food item:', err);
+    els.error.textContent = `Couldn't save this food: ${err.message}. Please try again.`;
+    els.error.hidden = false;
+    return;
+  }
+
+  showToast(existing ? `Saved changes to ${name}` : `Added "${name}" to your library`);
+  showView('today');
 }
 
 async function handleDeleteFood() {

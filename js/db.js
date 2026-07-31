@@ -6,10 +6,12 @@
  *   foodItems  — the personal library (OCR'd, manual, and starter-database foods)
  *   logEntries — what was actually eaten, per day
  *   settings   — small key/value app settings (units, optional goals)
+ *   savedMeals — named, reusable combos (e.g. "Morning coffee") built once in
+ *                Meal Builder and re-logged in one tap afterward
  */
 
 const DB_NAME = 'plate-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise = null;
 
@@ -36,6 +38,10 @@ function openDB() {
 
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings', { keyPath: 'key' });
+      }
+
+      if (!db.objectStoreNames.contains('savedMeals')) {
+        db.createObjectStore('savedMeals', { keyPath: 'id' });
       }
     };
 
@@ -134,6 +140,24 @@ const PlateDB = {
     return promisifyRequest(store.delete(id));
   },
 
+  // ---- Saved meals (reusable combos, e.g. "Morning coffee") ----
+  async saveMealTemplate(template) {
+    const store = await tx('savedMeals', 'readwrite');
+    const record = { id: template.id || uid(), created_at: new Date().toISOString(), ...template };
+    await promisifyRequest(store.put(record));
+    return record;
+  },
+
+  async getAllMealTemplates() {
+    const store = await tx('savedMeals');
+    return promisifyRequest(store.getAll());
+  },
+
+  async deleteMealTemplate(id) {
+    const store = await tx('savedMeals', 'readwrite');
+    return promisifyRequest(store.delete(id));
+  },
+
   // ---- Settings ----
   async getSetting(key, fallback = null) {
     const store = await tx('settings');
@@ -148,9 +172,10 @@ const PlateDB = {
 
   // ---- Backup / restore (the manual cross-browser workaround) ----
   async exportAll() {
-    const [foodItems, settingsStore] = await Promise.all([
+    const [foodItems, settingsStore, savedMeals] = await Promise.all([
       this.getAllFoodItems(),
       tx('settings').then((s) => promisifyRequest(s.getAll())),
+      this.getAllMealTemplates(),
     ]);
     const db = await openDB();
     const logStore = db.transaction('logEntries').objectStore('logEntries');
@@ -162,15 +187,17 @@ const PlateDB = {
       foodItems,
       logEntries,
       settings: settingsStore,
+      savedMeals,
     };
   },
 
   async importAll(data) {
     const db = await openDB();
-    const t = db.transaction(['foodItems', 'logEntries', 'settings'], 'readwrite');
+    const t = db.transaction(['foodItems', 'logEntries', 'settings', 'savedMeals'], 'readwrite');
     (data.foodItems || []).forEach((item) => t.objectStore('foodItems').put(item));
     (data.logEntries || []).forEach((entry) => t.objectStore('logEntries').put(entry));
     (data.settings || []).forEach((setting) => t.objectStore('settings').put(setting));
+    (data.savedMeals || []).forEach((meal) => t.objectStore('savedMeals').put(meal));
     return new Promise((resolve, reject) => {
       t.oncomplete = () => resolve(true);
       t.onerror = () => reject(t.error);

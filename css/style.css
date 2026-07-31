@@ -363,6 +363,7 @@ input {
    ============================================ */
 .field {
   margin-bottom: 16px;
+  position: relative;
 }
 
 .field label {
@@ -771,6 +772,72 @@ input {
   color: var(--basil);
   margin-top: 10px;
   text-align: center;
+}
+
+/* ============================================
+   Toast
+   ============================================ */
+.app-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-height) + 16px);
+  transform: translate(-50%, 12px);
+  background: var(--charcoal);
+  color: var(--porcelain);
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(43,46,51,0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease;
+  z-index: 30;
+  max-width: 88%;
+  text-align: center;
+}
+
+.app-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-toast { transition: opacity 120ms linear; }
+}
+
+/* ============================================
+   Custom autocomplete dropdown (Meal Builder food search)
+   ============================================ */
+.autocomplete-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid var(--steel-line);
+  border-radius: var(--radius-s);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 15;
+  box-shadow: 0 8px 20px rgba(43,46,51,0.14);
+}
+
+.autocomplete-option {
+  padding: 11px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--porcelain-dim);
+}
+
+.autocomplete-option:last-child { border-bottom: none; }
+.autocomplete-option:active { background: var(--porcelain-dim); }
+
+.autocomplete-empty {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--steel);
 }
 
 /* Visible keyboard focus everywhere */

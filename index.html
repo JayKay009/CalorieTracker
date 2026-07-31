@@ -86,8 +86,9 @@
       <button class="tab-btn is-active" data-filter="all">All</button>
       <button class="tab-btn" data-filter="favorites">★ Favorites</button>
       <button class="tab-btn" data-filter="recent">Recent</button>
+      <button class="tab-btn" data-filter="meals">Meals</button>
     </div>
-    <p class="field-hint">Tap a food to log it to today. Use the star to favorite, the pencil to edit.</p>
+    <p class="field-hint" id="library-hint">Tap a food to log it to today. Use the star to favorite, the pencil to edit.</p>
     <div id="library-list" class="log-list">
       <p class="empty-state">Your library is empty. Anything you scan or add manually will be saved here for quick reuse.</p>
     </div>
@@ -251,8 +252,8 @@
     <div class="plate-add-card">
       <div class="field">
         <label for="plate-food-search">Food</label>
-        <input type="text" id="plate-food-search" list="plate-food-list" placeholder="Search your library…" autocomplete="off">
-        <datalist id="plate-food-list"></datalist>
+        <input type="text" id="plate-food-search" placeholder="Search your library…" autocomplete="off">
+        <div id="plate-food-dropdown" class="autocomplete-dropdown" hidden></div>
       </div>
 
       <div class="field">
@@ -283,6 +284,13 @@
     </section>
 
     <div class="form-actions">
+      <label class="checkbox-row" style="margin-bottom:2px;">
+        <input type="checkbox" id="save-as-meal-toggle">
+        <span>Also save this as a quick-add meal (e.g. "Morning coffee")</span>
+      </label>
+      <div class="field" id="save-as-meal-name-field" hidden>
+        <input type="text" id="save-as-meal-name" placeholder="Name this meal…">
+      </div>
       <button type="button" class="btn-primary btn-block" id="finish-meal-btn" disabled>Finish meal — add to today's log</button>
       <button type="button" class="btn-text btn-block" id="cancel-meal-btn">Cancel and discard plate</button>
     </div>
