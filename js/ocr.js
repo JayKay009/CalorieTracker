@@ -108,15 +108,23 @@ const LABEL_PATTERNS = {
   // (rather than just "the number near the energy word") avoids accidentally
   // grabbing the kJ figure, which would be ~4x too high.
   caloriesByUnit: /(\d{1,4}(?:[.,]\d+)?)\s*k?cal\b/i,
-  caloriesEnglish: /calories[\s\S]{0,20}?(\d{1,4}(?:[.,]\d+)?)/i,
-  caloriesDutch: /(?:energie|calorie[eë]n)[\s\S]{0,20}?(\d{1,4}(?:[.,]\d+)?)/i,
+  // Falls back to the keyword + nearby number if no explicit "kcal" text was
+  // found at all (e.g. OCR dropped it). Optionally skips past a kJ-tagged
+  // number first, since EU labels put kJ immediately before kcal — without
+  // this, "Energie 950kJ 227" would grab 950 (the kJ figure) instead of 227.
+  caloriesEnglish: /calories[\s\S]{0,15}?(?:\d+(?:[.,]\d+)?\s*kj[\s\S]{0,15}?)?(\d{1,4}(?:[.,]\d+)?)/i,
+  caloriesDutch: /(?:energie(?:waarde)?|calorie[eë]n)[\s\S]{0,15}?(?:\d+(?:[.,]\d+)?\s*kj[\s\S]{0,15}?)?(\d{1,4}(?:[.,]\d+)?)/i,
 
-  protein: /(?:protein|eiwitten?)[\s\S]{0,20}?(\d{1,3}(?:[.,]\d+)?)/i,
-  totalFat: /(?:total\s*fat|totaal\s*vet)[\s\S]{0,20}?(\d{1,3}(?:[.,]\d+)?)/i,
-  anyFat: /\b(?:fat|vet)\b[\s\S]{0,20}?(\d{1,3}(?:[.,]\d+)?)/i,
-  carbs: /(?:total\s*carbohydrate|carbohydrate|carbs|koolhydra(?:ten|at))[\s\S]{0,20}?(\d{1,3}(?:[.,]\d+)?)/i,
-  fiber: /(?:dietary\s*fiber|fiber|vezels|voedingsvezel)[\s\S]{0,20}?(\d{1,3}(?:[.,]\d+)?)/i,
-  sugar: /(?:total\s*sugars|sugars|sugar|suikers?)[\s\S]{0,20}?(\d{1,3}(?:[.,]\d+)?)/i,
+  // Dutch nouns inflect (vet/vetten, eiwit/eiwitten) — matching only the
+  // singular missed real labels ("Vetten 12g" wasn't matching "vet\b" at
+  // all, since \b requires a boundary right after "vet" and "vetten"
+  // continues with letters there). (?:ten)? on the stem covers both forms.
+  protein: /(?:protein|eiwit(?:ten)?)[\s\S]{0,25}?(\d{1,3}(?:[.,]\d+)?)/i,
+  totalFat: /(?:total\s*fat|tota(?:al|le)\s*vet(?:ten)?)[\s\S]{0,25}?(\d{1,3}(?:[.,]\d+)?)/i,
+  anyFat: /\b(?:fat|vet(?:ten)?)\b[\s\S]{0,25}?(\d{1,3}(?:[.,]\d+)?)/i,
+  carbs: /(?:total\s*carbohydrate|carbohydrate|carbs|koolhydra(?:ten|at))[\s\S]{0,25}?(\d{1,3}(?:[.,]\d+)?)/i,
+  fiber: /(?:dietary\s*fiber|fiber|vezels|voedingsvezels?)[\s\S]{0,25}?(\d{1,3}(?:[.,]\d+)?)/i,
+  sugar: /(?:total\s*sugars|sugars|sugar|suikers?)[\s\S]{0,25}?(\d{1,3}(?:[.,]\d+)?)/i,
 
   // Sodium (mg) — matched separately from salt (g), since EU labels almost
   // always list "Zout"/"Salt" in grams instead of sodium in mg directly.
