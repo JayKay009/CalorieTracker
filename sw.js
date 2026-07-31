@@ -1,11 +1,15 @@
 /**
- * sw.js — minimal app-shell cache so the interface (not necessarily every
- * asset) works offline once it's been opened at least once.
- * OCR (Tesseract.js) and any food-database lookups are handled/cached
- * separately when those phases are built.
+ * sw.js — app-shell cache for offline use.
+ *
+ * Strategy: network-first, cache as fallback. This is deliberate — a
+ * cache-first strategy means updates never show up until sw.js itself
+ * changes bytes (easy to forget when only app.js/index.html etc. change,
+ * and it did cause a real stuck-on-old-version bug during development).
+ * Network-first means deploys always show up immediately when online, and
+ * the cache is purely a safety net for when there's no connection at all.
  */
 
-const CACHE_NAME = 'plate-shell-v1';
+const CACHE_NAME = 'plate-shell-v2'; // bumped to force a clean break from the old stale v1 cache
 const APP_SHELL = [
   './',
   './index.html',
@@ -40,11 +44,18 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then(
-      (cached) =>
-        cached ||
-        fetch(event.request).catch(() => caches.match('./index.html'))
-    )
+    fetch(event.request)
+      .then((networkResponse) => {
+        // Opportunistically refresh the offline cache with whatever we just
+        // got from the network, without blocking the response on it.
+        const responseClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        return networkResponse;
+      })
+      .catch(() =>
+        caches.match(event.request).then((cached) => cached || caches.match('./index.html'))
+      )
   );
 });

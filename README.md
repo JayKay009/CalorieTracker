@@ -26,6 +26,25 @@ No environment variables, no secrets, no server config — it's just static file
 
 ## Recent fixes (this round)
 
+- **Service worker was serving stale files** — this is the important one.
+  It used a cache-first strategy, so once a file was cached, updates on
+  GitHub never showed up until `sw.js` itself changed bytes. Several rounds
+  of fixes changed `app.js`/`ocr.js`/etc. without touching `sw.js`, so
+  browsers that had already loaded the app kept serving old code
+  indefinitely — this is almost certainly why Brave showed no changes even
+  hours after a push. **Now network-first**: it always tries the network
+  first and only falls back to the cache when there's no connection, so
+  deploys show up immediately going forward. The cache name was also bumped
+  to force a clean break from the old stale cache this one time.
+  **If you're still on an old version after this update**: in Brave/Chrome,
+  open the site → DevTools (F12) → Application tab → Service Workers →
+  "Unregister", then hard-reload. Or simpler: clear browsing data for the
+  site once.
+- **Verified the save path against real IndexedDB** (via the `fake-indexeddb`
+  test library, not just reasoning about the code) — every save function
+  (new food, edit, favorite, mark-used, log entry, meal template) was
+  individually tested and confirmed working correctly, including the exact
+  "brand new item" case that produced the Chrome error.
 - **OCR on light-text/dark-background labels**: images are now auto-converted
   to grayscale and inverted when dark-dominant, before OCR runs. This is
   color-agnostic (works on brightness, not any specific color) so it doesn't

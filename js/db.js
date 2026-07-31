@@ -75,9 +75,12 @@ const PlateDB = {
     const store = await tx('foodItems', 'readwrite');
     const now = new Date().toISOString();
     const record = {
-      id: item.id || uid(),
       created_at: item.created_at || now,
       ...item,
+      id: item.id || uid(), // must come AFTER the spread — if `item` explicitly
+      // has `id: undefined` (as a new food's form data does), spreading it
+      // first would silently overwrite a freshly generated id back to
+      // undefined, which IndexedDB then rejects as an invalid key.
       updated_at: now,
     };
     await promisifyRequest(store.put(record));
