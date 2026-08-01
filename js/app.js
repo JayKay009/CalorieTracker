@@ -113,19 +113,162 @@ async function renderToday() {
     return;
   }
 
-  listEl.innerHTML = entries
-    .map((e) => {
-      const mealTag = e.meal_label ? ` · ${e.meal_label[0].toUpperCase()}${e.meal_label.slice(1)}` : '';
-      return `
-      <div class="log-item">
+  todayEntryCache = entries;
+  listEl.innerHTML = groupTodayEntries(entries).map(todayRowHtml).join('');
+}
+
+/**
+ * Collapses log entries into display groups: entries that share a
+ * meal_group_id (from Meal Builder or a quick-add meal) become one group,
+ * everything else stays its own single-item group. Order follows each
+ * group's first occurrence in `entries`, so the already-chronological sort
+ * from renderToday is preserved.
+ */
+function groupTodayEntries(entries) {
+  const groups = [];
+  const byGroupId = new Map();
+  for (const e of entries) {
+    if (e.meal_group_id) {
+      let group = byGroupId.get(e.meal_group_id);
+      if (!group) {
+        group = { groupId: e.meal_group_id, items: [] };
+        byGroupId.set(e.meal_group_id, group);
+        groups.push(group);
+      }
+      group.items.push(e);
+    } else {
+      groups.push({ groupId: null, items: [e] });
+    }
+  }
+  return groups;
+}
+
+function capitalizeLabel(label) {
+  return label ? `${label[0].toUpperCase()}${label.slice(1)}` : '';
+}
+
+// The entries currently on screen, kept so click delegation on #today-log-list
+// can look an entry up by id without a fresh DB round-trip.
+let todayEntryCache = [];
+
+// Which meal-group cards are expanded, keyed by meal_group_id. Lives outside
+// renderToday so it survives a re-render (e.g. after editing a sub-item).
+const expandedMealGroups = new Set();
+
+function estimatedBadge(e) {
+  return e.is_estimated ? '<span class="estimated-badge">Estimated</span>' : '';
+}
+
+function todayRowHtml(group) {
+  if (group.items.length === 1) {
+    const e = group.items[0];
+    const mealTag = e.meal_label ? ` · ${capitalizeLabel(e.meal_label)}` : '';
+    return `
+      <div class="log-item is-tappable" data-action="edit-entry" data-id="${e.id}" role="button" tabindex="0">
         <div>
-          <div class="name">${escapeHtml(e.name || 'Item')}</div>
+          <div class="name">${escapeHtml(e.name || 'Item')}${estimatedBadge(e)}</div>
           <div class="detail">${escapeHtml(e.serving_display || '')}${mealTag}</div>
         </div>
         <div class="kcal">${Math.round(e.calories || 0)}</div>
       </div>`;
-    })
+  }
+
+  // Consolidated meal: one expandable card for all entries sharing a meal_group_id.
+  const total = group.items.reduce((sum, e) => sum + (e.calories || 0), 0);
+  const label = capitalizeLabel(group.items[0].meal_label) || 'Meal';
+  const itemNames = group.items.map((e) => escapeHtml(e.name || 'Item')).join(', ');
+  const isOpen = expandedMealGroups.has(group.groupId);
+
+  const subitems = group.items
+    .map(
+      (e) => `
+      <div class="meal-subitem is-tappable" data-action="edit-entry" data-id="${e.id}" role="button" tabindex="0">
+        <div>
+          <div class="name">${escapeHtml(e.name || 'Item')}${estimatedBadge(e)}</div>
+          <div class="detail">${escapeHtml(e.serving_display || '')}</div>
+        </div>
+        <div class="log-item-actions">
+          <div class="kcal">${Math.round(e.calories || 0)}</div>
+          <button type="button" class="row-icon-btn" data-action="delete-entry" data-id="${e.id}" aria-label="Delete this item">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+          </button>
+        </div>
+      </div>`
+    )
     .join('');
+
+  return `
+    <div class="meal-group-card">
+      <div class="log-item meal-group-summary" data-action="toggle-group" data-group-id="${group.groupId}" role="button" tabindex="0">
+        <div>
+          <div class="name">${label} <span class="meal-group-count">· ${group.items.length} items</span></div>
+          <div class="detail">${itemNames}</div>
+        </div>
+        <div class="log-item-actions">
+          <div class="kcal">${Math.round(total)}</div>
+          <button type="button" class="row-icon-btn" data-action="delete-group" data-group-id="${group.groupId}" aria-label="Delete this whole meal">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+          </button>
+          <svg class="chevron${isOpen ? ' is-open' : ''}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+      ${isOpen ? `<div class="meal-group-sublist">${subitems}</div>` : ''}
+    </div>`;
+}
+
+async function handleTodayListClick(evt) {
+  const btn = evt.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+
+  if (action === 'toggle-group') {
+    evt.stopPropagation();
+    const groupId = btn.dataset.groupId;
+    if (expandedMealGroups.has(groupId)) expandedMealGroups.delete(groupId);
+    else expandedMealGroups.add(groupId);
+    renderToday();
+    return;
+  }
+
+  if (action === 'delete-group') {
+    evt.stopPropagation();
+    const groupId = btn.dataset.groupId;
+    const items = todayEntryCache.filter((e) => e.meal_group_id === groupId);
+    if (!confirm(`Delete this whole meal (${items.length} item${items.length === 1 ? '' : 's'})? This can't be undone.`)) return;
+    for (const item of items) await PlateDB.deleteLogEntry(item.id);
+    expandedMealGroups.delete(groupId);
+    renderToday();
+    return;
+  }
+
+  if (action === 'delete-entry') {
+    evt.stopPropagation();
+    const id = btn.dataset.id;
+    if (!confirm('Delete this entry?')) return;
+    await PlateDB.deleteLogEntry(id);
+    renderToday();
+    return;
+  }
+
+  if (action === 'edit-entry') {
+    const id = btn.dataset.id;
+    const entry = todayEntryCache.find((e) => e.id === id);
+    if (entry) openEntrySheet(entry);
+  }
+}
+
+function wireTodayListDelegation() {
+  const listEl = document.getElementById('today-log-list');
+  listEl.addEventListener('click', handleTodayListClick);
+  listEl.addEventListener('keydown', (evt) => {
+    if (evt.key === 'Enter' || evt.key === ' ') {
+      const target = evt.target.closest('[data-action]');
+      if (target) {
+        evt.preventDefault();
+        handleTodayListClick(evt);
+      }
+    }
+  });
 }
 
 let libraryFilter = 'all';
@@ -570,6 +713,214 @@ function wireLogSheet() {
   });
 }
 
+/* ============================================
+   Log entry edit / estimate sheet
+   ============================================
+   One sheet, two purposes: editing an existing log entry (tapped from
+   Today) and creating a brand-new "estimated" entry (from the quick
+   action). An entry is in "scaled" mode when it's linked to a still-existing
+   library food (its amount can be edited and macros recompute from that
+   food's per-100 baseline); otherwise it's "estimated" mode, where the
+   calories/macros are just the numbers typed in directly — no baseline to
+   scale from, which is exactly what you want for a meal you couldn't weigh. */
+
+let activeEntry = null; // null while creating a new estimated entry
+let activeEntryFood = null;
+let activeEntryMode = 'estimated';
+
+function entrySheetEls() {
+  return {
+    backdrop: document.getElementById('entry-sheet-backdrop'),
+    eyebrow: document.getElementById('entry-sheet-eyebrow'),
+    nameField: document.getElementById('entry-name-field'),
+    name: document.getElementById('entry-name'),
+    amountField: document.getElementById('entry-amount-field'),
+    amount: document.getElementById('entry-amount'),
+    amountUnit: document.getElementById('entry-amount-unit'),
+    caloriesField: document.getElementById('entry-calories-field'),
+    calories: document.getElementById('entry-calories'),
+    macroFields: document.getElementById('entry-macro-fields'),
+    protein: document.getElementById('entry-protein'),
+    carbs: document.getElementById('entry-carbs'),
+    fat: document.getElementById('entry-fat'),
+    mealLabel: document.getElementById('entry-meal-label'),
+    preview: document.getElementById('entry-sheet-preview'),
+    estimatedHint: document.getElementById('entry-estimated-hint'),
+    error: document.getElementById('entry-sheet-error'),
+    saveBtn: document.getElementById('entry-save-btn'),
+    deleteBtn: document.getElementById('entry-delete-btn'),
+  };
+}
+
+async function openEntrySheet(entry) {
+  activeEntry = entry;
+  activeEntryFood = entry.food_item_id ? await PlateDB.getFoodItem(entry.food_item_id) : null;
+  activeEntryMode = !entry.is_estimated && activeEntryFood ? 'scaled' : 'estimated';
+
+  const els = entrySheetEls();
+  els.error.hidden = true;
+  els.mealLabel.value = entry.meal_label || '';
+  els.deleteBtn.hidden = false;
+
+  if (activeEntryMode === 'scaled') {
+    els.eyebrow.textContent = entry.name || 'Edit logged item';
+    els.nameField.hidden = true;
+    els.amountField.hidden = false;
+    els.amount.value = entry.quantity || '';
+    els.amountUnit.textContent = entry.unit || 'g';
+    els.caloriesField.hidden = true;
+    els.macroFields.hidden = true;
+    els.estimatedHint.hidden = true;
+    els.saveBtn.textContent = 'Save changes';
+    updateEntrySheetPreview();
+  } else {
+    els.eyebrow.textContent = 'Edit estimated entry';
+    els.nameField.hidden = false;
+    els.name.value = entry.name || '';
+    els.amountField.hidden = true;
+    els.caloriesField.hidden = false;
+    els.calories.value = entry.calories ? round(entry.calories) : '';
+    els.macroFields.hidden = false;
+    els.protein.value = entry.protein_g ? round(entry.protein_g) : '';
+    els.carbs.value = entry.carbs_g ? round(entry.carbs_g) : '';
+    els.fat.value = entry.fat_g ? round(entry.fat_g) : '';
+    els.estimatedHint.hidden = false;
+    els.saveBtn.textContent = 'Save changes';
+    updateEntrySheetPreview();
+  }
+
+  els.backdrop.hidden = false;
+}
+
+function openEstimateSheet() {
+  activeEntry = null;
+  activeEntryFood = null;
+  activeEntryMode = 'estimated';
+
+  const els = entrySheetEls();
+  els.error.hidden = true;
+  els.eyebrow.textContent = 'Estimate a meal';
+  els.nameField.hidden = false;
+  els.name.value = '';
+  els.amountField.hidden = true;
+  els.caloriesField.hidden = false;
+  els.calories.value = '';
+  els.macroFields.hidden = false;
+  els.protein.value = '';
+  els.carbs.value = '';
+  els.fat.value = '';
+  els.mealLabel.value = '';
+  els.estimatedHint.hidden = false;
+  els.saveBtn.textContent = 'Add to today\u2019s log';
+  els.deleteBtn.hidden = true;
+  updateEntrySheetPreview();
+
+  els.backdrop.hidden = false;
+  els.name.focus();
+}
+
+function closeEntrySheet() {
+  document.getElementById('entry-sheet-backdrop').hidden = true;
+  activeEntry = null;
+  activeEntryFood = null;
+}
+
+function updateEntrySheetPreview() {
+  const els = entrySheetEls();
+  if (activeEntryMode === 'scaled') {
+    const amount = parseFloat(els.amount.value) || 0;
+    const kcal = activeEntryFood ? Math.round((activeEntryFood.calories_per_100 || 0) * (amount / 100)) : 0;
+    els.preview.textContent = `${kcal} kcal`;
+  } else {
+    const kcal = Math.round(parseFloat(els.calories.value) || 0);
+    els.preview.textContent = `${kcal} kcal`;
+  }
+}
+
+async function handleEntrySheetSave() {
+  const els = entrySheetEls();
+  els.error.hidden = true;
+
+  if (activeEntryMode === 'scaled') {
+    const amount = parseFloat(els.amount.value);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      els.error.textContent = 'Enter an amount greater than 0.';
+      els.error.hidden = false;
+      return;
+    }
+    const scale = amount / 100;
+    const food = activeEntryFood;
+    await PlateDB.saveLogEntry({
+      ...activeEntry,
+      quantity: amount,
+      serving_display: `${round(amount)}${activeEntry.unit || 'g'}`,
+      meal_label: els.mealLabel.value || undefined,
+      calories: (food.calories_per_100 || 0) * scale,
+      protein_g: (food.protein_per_100 || 0) * scale,
+      carbs_g: (food.carbs_per_100 || 0) * scale,
+      fat_g: (food.fat_per_100 || 0) * scale,
+      fiber_g: (food.fiber_per_100 || 0) * scale,
+      sugar_g: (food.sugar_per_100 || 0) * scale,
+      sodium_mg: (food.sodium_mg_per_100 || 0) * scale,
+    });
+  } else {
+    const name = els.name.value.trim();
+    const calories = parseFloat(els.calories.value);
+    if (!name) {
+      els.error.textContent = 'Give this meal a name.';
+      els.error.hidden = false;
+      return;
+    }
+    if (!Number.isFinite(calories) || calories <= 0) {
+      els.error.textContent = 'Enter a rough calorie count greater than 0.';
+      els.error.hidden = false;
+      return;
+    }
+    await PlateDB.saveLogEntry({
+      ...(activeEntry || { date: todayDateStr(), logged_at: new Date().toISOString() }),
+      name,
+      is_estimated: true,
+      food_item_id: activeEntry ? activeEntry.food_item_id : undefined,
+      quantity: undefined,
+      unit: undefined,
+      serving_display: 'Estimated',
+      meal_label: els.mealLabel.value || undefined,
+      calories,
+      protein_g: parseFloat(els.protein.value) || 0,
+      carbs_g: parseFloat(els.carbs.value) || 0,
+      fat_g: parseFloat(els.fat.value) || 0,
+      fiber_g: activeEntry ? activeEntry.fiber_g : 0,
+      sugar_g: activeEntry ? activeEntry.sugar_g : 0,
+      sodium_mg: activeEntry ? activeEntry.sodium_mg : 0,
+    });
+  }
+
+  const wasNew = !activeEntry;
+  closeEntrySheet();
+  showToast(wasNew ? 'Added to today\u2019s log' : 'Saved changes');
+  renderToday();
+}
+
+async function handleEntrySheetDelete() {
+  if (!activeEntry) return;
+  if (!confirm('Delete this entry?')) return;
+  await PlateDB.deleteLogEntry(activeEntry.id);
+  closeEntrySheet();
+  renderToday();
+}
+
+function wireEntrySheet() {
+  document.getElementById('estimate-meal-btn').addEventListener('click', openEstimateSheet);
+  document.getElementById('entry-amount').addEventListener('input', updateEntrySheetPreview);
+  document.getElementById('entry-calories').addEventListener('input', updateEntrySheetPreview);
+  document.getElementById('entry-save-btn').addEventListener('click', handleEntrySheetSave);
+  document.getElementById('entry-delete-btn').addEventListener('click', handleEntrySheetDelete);
+  document.getElementById('entry-cancel-btn').addEventListener('click', closeEntrySheet);
+  document.getElementById('entry-sheet-backdrop').addEventListener('click', (evt) => {
+    if (evt.target.id === 'entry-sheet-backdrop') closeEntrySheet();
+  });
+}
+
 function initialViewFromHash() {
   const fromHash = window.location.hash.replace('#', '');
   return VIEWS.includes(fromHash) ? fromHash : 'today';
@@ -587,11 +938,13 @@ function registerServiceWorker() {
 
 document.addEventListener('DOMContentLoaded', () => {
   wireNav();
+  wireTodayListDelegation();
   wireLibrarySearch();
   wireLibraryListDelegation();
   wireLibraryTabs();
   wireFoodForm();
   wireLogSheet();
+  wireEntrySheet();
   wireSettingsPanel();
   wireMealBuilder();
   wireScanView();

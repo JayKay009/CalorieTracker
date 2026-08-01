@@ -209,6 +209,18 @@ input {
 
 .action-tile svg { color: var(--basil); flex-shrink: 0; }
 
+.action-tile--wide {
+  grid-column: 1 / -1;
+}
+
+.action-tile-sub {
+  display: block;
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--steel);
+  margin-top: 2px;
+}
+
 /* ============================================
    Log list
    ============================================ */
@@ -261,6 +273,87 @@ input {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--turmeric);
+}
+
+.log-item.meal-group .meal-group-count {
+  font-weight: 400;
+  color: var(--steel);
+  font-size: 12px;
+}
+
+/* Expandable meal-group card: a tappable summary row + a chevron, plus a
+   sub-list of the individual items that only renders once expanded. */
+.meal-group-card {
+  background: #fff;
+  border: 1px solid var(--steel-line);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}
+
+.meal-group-card .meal-group-summary {
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.meal-group-card .meal-group-summary:active {
+  background: var(--porcelain-dim);
+}
+
+.meal-group-card .chevron {
+  color: var(--steel);
+  transition: transform 160ms ease;
+  flex-shrink: 0;
+}
+
+.meal-group-card .chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.meal-group-sublist {
+  border-top: 1px solid var(--steel-line);
+  background: var(--porcelain-dim);
+}
+
+.meal-subitem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 10px 22px;
+  border-top: 1px solid var(--steel-line);
+  cursor: pointer;
+}
+
+.meal-subitem:first-child { border-top: none; }
+.meal-subitem:active { background: rgba(0,0,0,0.03); }
+
+.meal-subitem .name { font-weight: 600; font-size: 13px; }
+.meal-subitem .detail { font-size: 12px; color: var(--steel); }
+
+.meal-subitem .log-item-actions {
+  gap: 8px;
+}
+
+.meal-subitem .kcal {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--turmeric);
+  font-size: 13px;
+}
+
+.estimated-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--basil);
+  background: var(--basil-soft);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
 /* ============================================

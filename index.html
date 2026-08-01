@@ -58,6 +58,10 @@
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
         <span>Add manually</span>
       </button>
+      <button class="action-tile action-tile--wide" id="estimate-meal-btn">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l2.5 2.5"/><circle cx="12" cy="13" r="8"/><path d="M9 2h6M12 2v3"/></svg>
+        <span>Estimate a meal <span class="action-tile-sub">no scale needed — just enter a rough calorie count</span></span>
+      </button>
     </section>
 
     <section class="log-section">
@@ -120,6 +124,73 @@
         <button type="button" class="btn-primary btn-block" id="log-confirm-btn">Add to today's log</button>
         <button type="button" class="btn-secondary btn-block" id="log-edit-btn">Edit this food instead</button>
         <button type="button" class="btn-text btn-block" id="log-cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Log entry edit / estimate sheet =====
+       Reused for two purposes:
+       - Editing an already-logged entry (tapped from Today), whether it's a
+         normal scaled item or a no-scale "estimated" entry.
+       - Creating a brand-new "estimated" entry from the Today quick action,
+         for meals you can't measure (e.g. a restaurant plate) where you just
+         want to log a rough total calorie number instead of weighing items. -->
+  <div class="sheet-backdrop" id="entry-sheet-backdrop" hidden>
+    <div class="sheet" role="dialog" aria-label="Log entry">
+      <p class="eyebrow" id="entry-sheet-eyebrow">Edit entry</p>
+
+      <div class="field" id="entry-name-field" hidden>
+        <label for="entry-name">What was it?</label>
+        <input type="text" id="entry-name" placeholder="e.g. Restaurant steak, fries &amp; a Sprite" autocomplete="off">
+      </div>
+
+      <div class="field" id="entry-amount-field" hidden>
+        <label for="entry-amount">Amount eaten</label>
+        <div class="field-row">
+          <input type="number" id="entry-amount" min="0" step="any" inputmode="decimal" class="hero-input">
+          <span class="unit-suffix" id="entry-amount-unit">g</span>
+        </div>
+      </div>
+
+      <div class="field field--hero" id="entry-calories-field" hidden>
+        <label for="entry-calories">Roughly how many calories?</label>
+        <input type="number" id="entry-calories" min="0" step="any" inputmode="decimal" class="hero-input">
+      </div>
+
+      <div class="macro-grid" id="entry-macro-fields" hidden>
+        <div class="field">
+          <label for="entry-protein">Protein (g) <span class="optional">optional</span></label>
+          <input type="number" id="entry-protein" min="0" step="any" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="entry-carbs">Carbs (g) <span class="optional">optional</span></label>
+          <input type="number" id="entry-carbs" min="0" step="any" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="entry-fat">Fat (g) <span class="optional">optional</span></label>
+          <input type="number" id="entry-fat" min="0" step="any" inputmode="decimal">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="entry-meal-label">Meal <span class="optional">(optional)</span></label>
+        <select id="entry-meal-label">
+          <option value="">No label</option>
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch">Lunch</option>
+          <option value="dinner">Dinner</option>
+          <option value="snack">Snack</option>
+        </select>
+      </div>
+
+      <p class="log-preview" id="entry-sheet-preview">0 kcal</p>
+      <p class="field-hint" id="entry-estimated-hint" hidden>Logged as "Estimated" — this uses the number you enter directly, rather than scaling from a saved food. A good use for a meal you had no way to weigh, like something ordered at a restaurant.</p>
+      <p class="form-error" id="entry-sheet-error" hidden></p>
+
+      <div class="form-actions">
+        <button type="button" class="btn-primary btn-block" id="entry-save-btn">Save changes</button>
+        <button type="button" class="btn-danger btn-block" id="entry-delete-btn" hidden>Delete entry</button>
+        <button type="button" class="btn-text btn-block" id="entry-cancel-btn">Cancel</button>
       </div>
     </div>
   </div>
