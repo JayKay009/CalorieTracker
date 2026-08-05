@@ -622,6 +622,30 @@ input {
   font-size: 14px;
 }
 
+/* Day-detail sheet (History → tap a day): taller than the small action
+   sheets, since it can hold a full day's worth of entries. */
+.sheet--tall {
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.day-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.day-detail-list {
+  margin-top: 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.day-detail-list .empty-state { margin: 0; }
+
 .log-preview {
   font-family: var(--font-mono);
   font-weight: 700;
@@ -822,6 +846,9 @@ input {
 }
 
 .history-day:last-child { border-bottom: none; }
+
+.history-day.is-tappable { cursor: pointer; }
+.history-day.is-tappable:active { background: var(--porcelain-dim); }
 
 .history-day .hist-date {
   width: 76px;

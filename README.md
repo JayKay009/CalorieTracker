@@ -44,7 +44,10 @@ enough context to keep going — no need to re-explain the idea from scratch.
   salt→sodium conversion, decimal commas, Dutch noun inflections
   (vet/vetten, eiwit/eiwitten), and auto-inverts light-text-on-dark-background
   labels before OCR (color-agnostic, brightness-based).
-- **History**: last 14 days of logged calories.
+- **History**: last 14 days of logged calories, as a bar list. Tap any day
+  to open a detail sheet showing exactly what was logged that day — same
+  totals readout and meal-group cards as the Today screen, just read-only
+  (no editing from History; go to Today to fix an entry).
 - **Backup**: export/import the whole database as a JSON file — the
   workaround for "no accounts," since data otherwise lives only in the
   current browser on the current device (this is a deliberate tradeoff, not

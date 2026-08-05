@@ -948,6 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
   wireSettingsPanel();
   wireMealBuilder();
   wireScanView();
+  wireHistory();
   seedStarterFoods().then(() => {
     if (initialViewFromHash() === 'library') renderLibrary();
   });

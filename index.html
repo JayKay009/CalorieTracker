@@ -515,8 +515,33 @@
       </button>
       <div><p class="eyebrow">Past days</p><h1 class="date-heading">History</h1></div>
     </header>
+    <p class="field-hint">Tap a day to see what was logged.</p>
     <div id="history-list"></div>
   </main>
+
+  <!-- ===== Day detail sheet (tap a day in History) ===== -->
+  <div class="sheet-backdrop" id="day-detail-backdrop" hidden>
+    <div class="sheet sheet--tall" role="dialog" aria-label="Day detail">
+      <div class="day-detail-header">
+        <div>
+          <p class="eyebrow" id="day-detail-eyebrow">Day</p>
+          <h1 class="date-heading" id="day-detail-date">—</h1>
+        </div>
+        <button class="icon-btn" id="day-detail-close-btn" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="macro-row" id="day-detail-macros">
+        <div class="macro-pill"><span class="macro-val" id="day-detail-calories">0</span><span class="macro-key">kcal</span></div>
+        <div class="macro-pill"><span class="macro-val" id="day-detail-protein">0</span><span class="macro-key">protein</span></div>
+        <div class="macro-pill"><span class="macro-val" id="day-detail-carbs">0</span><span class="macro-key">carbs</span></div>
+        <div class="macro-pill"><span class="macro-val" id="day-detail-fat">0</span><span class="macro-key">fat</span></div>
+      </div>
+
+      <div id="day-detail-list" class="log-list day-detail-list"></div>
+    </div>
+  </div>
 
   <!-- ===== Bottom nav ===== -->
   <nav class="bottom-nav" aria-label="Primary">
