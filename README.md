@@ -76,8 +76,24 @@ enough context to keep going — no need to re-explain the idea from scratch.
   no `DB_VERSION` bump was needed to add them. They have no `food_item_id`
   baseline to scale from, so editing one edits the calorie/macro numbers
   directly rather than an amount.
-- Not yet tested on iOS Safari or desktop Firefox/Safari — only Brave and
-  Chrome on Android so far.
+- **iOS Safari input zoom**: any input/select under 16px font-size makes
+  Safari auto-zoom the page on focus — and (Apple's implementation) it
+  doesn't zoom back out on blur, so the whole app stays zoomed until the
+  person manually pinches back out. All form inputs are 16px+ now (`.field
+  input`, `.field select`, `.search-bar input`); if you add a new input
+  anywhere, keep it at 16px or larger for the same reason.
+- **iOS Safari nested scroll**: a `max-height` + `flex-direction: column`
+  container with an internal `overflow-y: auto` child (e.g. `.sheet--tall` /
+  `.day-detail-list` for the History day-detail sheet) needs `overflow:
+  hidden` on the outer container in Safari specifically, or it won't clip
+  to `max-height` and the inner list won't actually get a scrollable area —
+  content just spills past the screen edge with no way to scroll. Also add
+  `-webkit-overflow-scrolling: touch` on the scrolling child for proper
+  momentum scrolling. If you build another tall sheet/modal, follow the
+  same pattern.
+- Known iOS Safari issues fixed based on your report (input zoom, day-detail
+  scroll — see above); not independently re-verified on a device, so flag it
+  if either one is still off. Desktop Firefox/Safari still untested.
 
 ## Run it locally
 

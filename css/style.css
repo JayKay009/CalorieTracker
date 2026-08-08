@@ -367,7 +367,10 @@ input {
   border-radius: var(--radius-m);
   border: 1px solid var(--steel-line);
   background: #fff;
-  font-size: 14px;
+  /* 16px minimum: iOS Safari auto-zooms the page on focus for any input
+     under 16px, and (per Apple's implementation) doesn't zoom back out on
+     blur — it stays zoomed until the person manually pinches back out. */
+  font-size: 16px;
   color: var(--charcoal);
 }
 
@@ -483,7 +486,8 @@ input {
   border-radius: var(--radius-s);
   border: 1px solid var(--steel-line);
   background: #fff;
-  font-size: 15px;
+  /* Same 16px-minimum reasoning as .search-bar input above. */
+  font-size: 16px;
   color: var(--charcoal);
   font-variant-numeric: tabular-nums;
 }
@@ -626,8 +630,14 @@ input {
    sheets, since it can hold a full day's worth of entries. */
 .sheet--tall {
   max-height: 82vh;
+  max-height: min(82vh, 82dvh); /* dvh accounts for Safari's collapsing address bar; ignored where unsupported */
   display: flex;
   flex-direction: column;
+  /* Without this, Safari doesn't reliably clip content to max-height in a
+     column flex layout — the list below ends up sized to its full content
+     height instead of the remaining space, so it has nothing to scroll
+     within and items just spill past the bottom of the screen. */
+  overflow: hidden;
 }
 
 .day-detail-header {
@@ -635,6 +645,7 @@ input {
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 14px;
+  flex-shrink: 0;
 }
 
 .day-detail-list {
@@ -642,6 +653,10 @@ input {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+  /* Momentum scrolling for the nested scroll area on iOS, and stop a scroll
+     that hits the top/bottom of this list from dragging the page behind it. */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .day-detail-list .empty-state { margin: 0; }
