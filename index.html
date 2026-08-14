@@ -22,52 +22,55 @@
   <main class="view" id="view-today" data-view="today">
     <header class="view-header">
       <div>
-        <p class="eyebrow">Today</p>
+        <p class="eyebrow" data-i18n="todayEyebrow">Today</p>
         <h1 class="date-heading" id="today-date">—</h1>
       </div>
-      <button class="icon-btn" id="settings-btn" data-nav="settings" aria-label="Settings">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.13.03.26.08.39.15A1.65 1.65 0 0 0 21 9.4V9.4a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
+      <div class="header-actions">
+        <button class="lang-toggle-btn" id="lang-toggle-btn" type="button">Nederlands</button>
+        <button class="icon-btn" id="settings-btn" data-nav="settings" data-i18n-aria="settingsAria" aria-label="Settings">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.13.03.26.08.39.15A1.65 1.65 0 0 0 21 9.4V9.4a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
     </header>
 
     <section class="readout-card" aria-label="Calories logged today">
-      <p class="readout-label">calories</p>
+      <p class="readout-label" data-i18n="caloriesReadoutLabel">calories</p>
       <p class="readout" id="today-calories">0</p>
       <p class="goal-line" id="today-goal-line" hidden></p>
       <div class="macro-row" id="today-macros">
-        <div class="macro-pill"><span class="macro-val" id="today-protein">0</span><span class="macro-key">protein</span></div>
-        <div class="macro-pill"><span class="macro-val" id="today-carbs">0</span><span class="macro-key">carbs</span></div>
-        <div class="macro-pill"><span class="macro-val" id="today-fat">0</span><span class="macro-key">fat</span></div>
+        <div class="macro-pill"><span class="macro-val" id="today-protein">0</span><span class="macro-key" data-i18n="macroProtein">protein</span></div>
+        <div class="macro-pill"><span class="macro-val" id="today-carbs">0</span><span class="macro-key" data-i18n="macroCarbs">carbs</span></div>
+        <div class="macro-pill"><span class="macro-val" id="today-fat">0</span><span class="macro-key" data-i18n="macroFat">fat</span></div>
       </div>
     </section>
 
     <section class="quick-actions">
       <button class="action-tile" data-nav="scan">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M4 16v3a1 1 0 0 0 1 1h3M20 8V5a1 1 0 0 0-1-1h-3M20 16v3a1 1 0 0 1-1 1h-3"/><circle cx="12" cy="12" r="3.2"/></svg>
-        <span>Scan label</span>
+        <span data-i18n="scanLabelTile">Scan label</span>
       </button>
       <button class="action-tile" data-nav="library">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        <span>Library</span>
+        <span data-i18n="libraryTile">Library</span>
       </button>
       <button class="action-tile" data-nav="build">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="12" width="18" height="7" rx="1.5"/><path d="M7 12V9a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/><path d="M12 12V6"/></svg>
-        <span>Build a meal</span>
+        <span data-i18n="buildMealTile">Build a meal</span>
       </button>
       <button class="action-tile" data-nav="manual">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
-        <span>Add manually</span>
+        <span data-i18n="addManuallyTile">Add manually</span>
       </button>
       <button class="action-tile action-tile--wide" id="estimate-meal-btn">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l2.5 2.5"/><circle cx="12" cy="13" r="8"/><path d="M9 2h6M12 2v3"/></svg>
-        <span>Estimate a meal <span class="action-tile-sub">no scale needed — just enter a rough calorie count</span></span>
+        <span><span data-i18n="estimateMealTile">Estimate a meal</span> <span class="action-tile-sub" data-i18n="estimateMealSub">no scale needed — just enter a rough calorie count</span></span>
       </button>
     </section>
 
     <section class="log-section">
-      <p class="section-label">Logged today</p>
+      <p class="section-label" data-i18n="loggedTodayLabel">Logged today</p>
       <div id="today-log-list" class="log-list">
-        <p class="empty-state">Nothing logged yet. Use one of the actions above to add your first item.</p>
+        <p class="empty-state" data-i18n="todayEmptyState">Nothing logged yet. Use one of the actions above to add your first item.</p>
       </div>
     </section>
   </main>
@@ -76,54 +79,54 @@
   <main class="view" id="view-library" data-view="library" hidden>
     <header class="view-header">
       <div>
-        <p class="eyebrow">Your foods</p>
-        <h1 class="date-heading">Library</h1>
+        <p class="eyebrow" data-i18n="libraryEyebrow">Your foods</p>
+        <h1 class="date-heading" data-i18n="libraryHeading">Library</h1>
       </div>
-      <button class="icon-btn" data-nav="manual" aria-label="Add item">
+      <button class="icon-btn" data-nav="manual" data-i18n-aria="addItemAria" aria-label="Add item">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </header>
     <div class="search-bar">
-      <input type="search" id="library-search" placeholder="Search saved foods…" autocomplete="off">
+      <input type="search" id="library-search" data-i18n-placeholder="librarySearchPlaceholder" placeholder="Search saved foods…" autocomplete="off">
     </div>
     <div class="tab-row" id="library-tabs">
-      <button class="tab-btn is-active" data-filter="all">All</button>
-      <button class="tab-btn" data-filter="favorites">★ Favorites</button>
-      <button class="tab-btn" data-filter="recent">Recent</button>
-      <button class="tab-btn" data-filter="meals">Meals</button>
+      <button class="tab-btn is-active" data-filter="all" data-i18n="tabAll">All</button>
+      <button class="tab-btn" data-filter="favorites" data-i18n="tabFavorites">★ Favorites</button>
+      <button class="tab-btn" data-filter="recent" data-i18n="tabRecent">Recent</button>
+      <button class="tab-btn" data-filter="meals" data-i18n="tabMeals">Meals</button>
     </div>
-    <p class="field-hint" id="library-hint">Tap a food to log it to today. Use the star to favorite, the pencil to edit.</p>
+    <p class="field-hint" id="library-hint" data-i18n="libraryHint">Tap a food to log it to today. Use the star to favorite, the pencil to edit.</p>
     <div id="library-list" class="log-list">
-      <p class="empty-state">Your library is empty. Anything you scan or add manually will be saved here for quick reuse.</p>
+      <p class="empty-state" data-i18n="libraryEmptyState">Your library is empty. Anything you scan or add manually will be saved here for quick reuse.</p>
     </div>
   </main>
 
   <!-- ===== Log-from-library sheet ===== -->
   <div class="sheet-backdrop" id="log-sheet-backdrop" hidden>
-    <div class="sheet" role="dialog" aria-label="Log this food">
+    <div class="sheet" role="dialog" data-i18n-aria="logSheetAria" aria-label="Log this food">
       <p class="eyebrow" id="log-sheet-name">Item</p>
       <div class="field">
-        <label for="log-amount">Amount eaten</label>
+        <label for="log-amount" data-i18n="amountEatenLabel">Amount eaten</label>
         <div class="field-row">
           <input type="number" id="log-amount" min="0" step="any" value="100" class="hero-input">
           <span class="unit-suffix" id="log-unit">g</span>
         </div>
       </div>
       <div class="field">
-        <label for="log-meal-label">Meal <span class="optional">(optional)</span></label>
+        <label for="log-meal-label"><span data-i18n="mealLabel">Meal</span> <span class="optional" data-i18n="optional">(optional)</span></label>
         <select id="log-meal-label">
-          <option value="">No label</option>
-          <option value="breakfast">Breakfast</option>
-          <option value="lunch">Lunch</option>
-          <option value="dinner">Dinner</option>
-          <option value="snack">Snack</option>
+          <option value="" data-i18n="noLabelOption">No label</option>
+          <option value="breakfast" data-i18n="breakfastOption">Breakfast</option>
+          <option value="lunch" data-i18n="lunchOption">Lunch</option>
+          <option value="dinner" data-i18n="dinnerOption">Dinner</option>
+          <option value="snack" data-i18n="snackOption">Snack</option>
         </select>
       </div>
       <p class="log-preview" id="log-preview">0 kcal</p>
       <div class="form-actions">
-        <button type="button" class="btn-primary btn-block" id="log-confirm-btn">Add to today's log</button>
-        <button type="button" class="btn-secondary btn-block" id="log-edit-btn">Edit this food instead</button>
-        <button type="button" class="btn-text btn-block" id="log-cancel-btn">Cancel</button>
+        <button type="button" class="btn-primary btn-block" id="log-confirm-btn" data-i18n="addToTodaysLog">Add to today's log</button>
+        <button type="button" class="btn-secondary btn-block" id="log-edit-btn" data-i18n="editThisFoodInstead">Edit this food instead</button>
+        <button type="button" class="btn-text btn-block" id="log-cancel-btn" data-i18n="cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -136,16 +139,16 @@
          for meals you can't measure (e.g. a restaurant plate) where you just
          want to log a rough total calorie number instead of weighing items. -->
   <div class="sheet-backdrop" id="entry-sheet-backdrop" hidden>
-    <div class="sheet" role="dialog" aria-label="Log entry">
+    <div class="sheet" role="dialog" data-i18n-aria="entrySheetAria" aria-label="Log entry">
       <p class="eyebrow" id="entry-sheet-eyebrow">Edit entry</p>
 
       <div class="field" id="entry-name-field" hidden>
-        <label for="entry-name">What was it?</label>
-        <input type="text" id="entry-name" placeholder="e.g. Restaurant steak, fries &amp; a Sprite" autocomplete="off">
+        <label for="entry-name" data-i18n="whatWasItLabel">What was it?</label>
+        <input type="text" id="entry-name" data-i18n-placeholder="restaurantPlaceholder" placeholder="e.g. Restaurant steak, fries &amp; a Sprite" autocomplete="off">
       </div>
 
       <div class="field" id="entry-amount-field" hidden>
-        <label for="entry-amount">Amount eaten</label>
+        <label for="entry-amount" data-i18n="amountEatenLabel">Amount eaten</label>
         <div class="field-row">
           <input type="number" id="entry-amount" min="0" step="any" inputmode="decimal" class="hero-input">
           <span class="unit-suffix" id="entry-amount-unit">g</span>
@@ -153,44 +156,44 @@
       </div>
 
       <div class="field field--hero" id="entry-calories-field" hidden>
-        <label for="entry-calories">Roughly how many calories?</label>
+        <label for="entry-calories" data-i18n="roughCaloriesLabel">Roughly how many calories?</label>
         <input type="number" id="entry-calories" min="0" step="any" inputmode="decimal" class="hero-input">
       </div>
 
       <div class="macro-grid" id="entry-macro-fields" hidden>
         <div class="field">
-          <label for="entry-protein">Protein (g) <span class="optional">optional</span></label>
+          <label for="entry-protein"><span data-i18n="proteinGLabel">Protein (g)</span> <span class="optional" data-i18n="optionalShort">optional</span></label>
           <input type="number" id="entry-protein" min="0" step="any" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="entry-carbs">Carbs (g) <span class="optional">optional</span></label>
+          <label for="entry-carbs"><span data-i18n="carbsGLabel">Carbs (g)</span> <span class="optional" data-i18n="optionalShort">optional</span></label>
           <input type="number" id="entry-carbs" min="0" step="any" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="entry-fat">Fat (g) <span class="optional">optional</span></label>
+          <label for="entry-fat"><span data-i18n="fatGLabel">Fat (g)</span> <span class="optional" data-i18n="optionalShort">optional</span></label>
           <input type="number" id="entry-fat" min="0" step="any" inputmode="decimal">
         </div>
       </div>
 
       <div class="field">
-        <label for="entry-meal-label">Meal <span class="optional">(optional)</span></label>
+        <label for="entry-meal-label"><span data-i18n="mealLabel">Meal</span> <span class="optional" data-i18n="optional">(optional)</span></label>
         <select id="entry-meal-label">
-          <option value="">No label</option>
-          <option value="breakfast">Breakfast</option>
-          <option value="lunch">Lunch</option>
-          <option value="dinner">Dinner</option>
-          <option value="snack">Snack</option>
+          <option value="" data-i18n="noLabelOption">No label</option>
+          <option value="breakfast" data-i18n="breakfastOption">Breakfast</option>
+          <option value="lunch" data-i18n="lunchOption">Lunch</option>
+          <option value="dinner" data-i18n="dinnerOption">Dinner</option>
+          <option value="snack" data-i18n="snackOption">Snack</option>
         </select>
       </div>
 
       <p class="log-preview" id="entry-sheet-preview">0 kcal</p>
-      <p class="field-hint" id="entry-estimated-hint" hidden>Logged as "Estimated" — this uses the number you enter directly, rather than scaling from a saved food. A good use for a meal you had no way to weigh, like something ordered at a restaurant.</p>
+      <p class="field-hint" id="entry-estimated-hint" data-i18n="estimatedHint" hidden>Logged as "Estimated" — this uses the number you enter directly, rather than scaling from a saved food. A good use for a meal you had no way to weigh, like something ordered at a restaurant.</p>
       <p class="form-error" id="entry-sheet-error" hidden></p>
 
       <div class="form-actions">
-        <button type="button" class="btn-primary btn-block" id="entry-save-btn">Save changes</button>
-        <button type="button" class="btn-danger btn-block" id="entry-delete-btn" hidden>Delete entry</button>
-        <button type="button" class="btn-text btn-block" id="entry-cancel-btn">Cancel</button>
+        <button type="button" class="btn-primary btn-block" id="entry-save-btn" data-i18n="saveChanges">Save changes</button>
+        <button type="button" class="btn-danger btn-block" id="entry-delete-btn" data-i18n="deleteEntry" hidden>Delete entry</button>
+        <button type="button" class="btn-text btn-block" id="entry-cancel-btn" data-i18n="cancel">Cancel</button>
       </div>
     </div>
   </div>
@@ -201,49 +204,49 @@
       <button class="icon-btn back-btn" data-nav="today" aria-label="Back">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <div><p class="eyebrow">Add item</p><h1 class="date-heading">Scan label</h1></div>
+      <div><p class="eyebrow" data-i18n="addItemEyebrow">Add item</p><h1 class="date-heading" data-i18n="scanLabelHeading">Scan label</h1></div>
     </header>
 
     <div id="scan-capture-panel">
       <label class="capture-tile" for="scan-file-input">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8V5a1 1 0 0 1 1-1h3M4 16v3a1 1 0 0 0 1 1h3M20 8V5a1 1 0 0 0-1-1h-3M20 16v3a1 1 0 0 1-1 1h-3"/><circle cx="12" cy="12" r="3.2"/></svg>
-        <span>Take a photo or choose an image of the nutrition label</span>
+        <span data-i18n="captureTileText">Take a photo or choose an image of the nutrition label</span>
       </label>
       <input type="file" id="scan-file-input" accept="image/*" capture="environment" hidden>
-      <p class="field-hint">Fill the frame with just the nutrition facts panel and keep it flat and well-lit for the best read.</p>
+      <p class="field-hint" data-i18n="captureHint">Fill the frame with just the nutrition facts panel and keep it flat and well-lit for the best read.</p>
     </div>
 
     <div id="scan-preview-panel" hidden>
       <img id="scan-preview-img" alt="Captured label preview" class="scan-preview-img">
       <div class="form-actions">
-        <button type="button" class="btn-primary btn-block" id="scan-read-btn">Read label</button>
-        <button type="button" class="btn-text btn-block" id="scan-retake-btn">Choose a different photo</button>
+        <button type="button" class="btn-primary btn-block" id="scan-read-btn" data-i18n="readLabelBtn">Read label</button>
+        <button type="button" class="btn-text btn-block" id="scan-retake-btn" data-i18n="retakePhotoBtn">Choose a different photo</button>
       </div>
     </div>
 
     <div id="scan-progress-panel" hidden>
       <div class="spinner" aria-hidden="true"></div>
-      <p class="scan-status" id="scan-status">Loading OCR engine…</p>
+      <p class="scan-status" id="scan-status" data-i18n="ocrLoadingEngine">Loading OCR engine…</p>
     </div>
 
     <div id="scan-results-panel" hidden>
-      <p class="section-label">Here's what was read off the label</p>
-      <p class="field-hint">Fix anything that's wrong or missing below — nothing is saved until the next screen.</p>
+      <p class="section-label" data-i18n="resultsHeading">Here's what was read off the label</p>
+      <p class="field-hint" data-i18n="reviewHint">Fix anything that's wrong or missing below — nothing is saved until the next screen.</p>
 
       <div class="field-row">
         <div class="field">
-          <label for="scan-serving-amount">Serving size</label>
+          <label for="scan-serving-amount" data-i18n="servingSizeLabel">Serving size</label>
           <input type="number" id="scan-serving-amount" min="0" step="any" inputmode="decimal">
         </div>
         <div class="field field--unit">
-          <label for="scan-serving-unit">Unit</label>
+          <label for="scan-serving-unit" data-i18n="unitLabel">Unit</label>
           <select id="scan-serving-unit">
-            <optgroup label="Weight">
+            <optgroup label="Weight" data-i18n-label="weightOptgroup">
               <option value="g">g</option>
               <option value="oz">oz</option>
               <option value="lb">lb</option>
             </optgroup>
-            <optgroup label="Volume">
+            <optgroup label="Volume" data-i18n-label="volumeOptgroup">
               <option value="ml">ml</option>
               <option value="tsp">tsp</option>
               <option value="tbsp">tbsp</option>
@@ -255,46 +258,46 @@
       </div>
 
       <div class="field field--hero">
-        <label for="scan-calories">Calories</label>
+        <label for="scan-calories" data-i18n="caloriesLabel">Calories</label>
         <input type="number" id="scan-calories" min="0" step="any" inputmode="decimal" class="hero-input">
       </div>
 
       <div class="macro-grid">
         <div class="field">
-          <label for="scan-protein">Protein (g)</label>
+          <label for="scan-protein" data-i18n="proteinGLabel">Protein (g)</label>
           <input type="number" id="scan-protein" min="0" step="any" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="scan-carbs">Carbs (g)</label>
+          <label for="scan-carbs" data-i18n="carbsGLabel">Carbs (g)</label>
           <input type="number" id="scan-carbs" min="0" step="any" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="scan-fat">Fat (g)</label>
+          <label for="scan-fat" data-i18n="fatGLabel">Fat (g)</label>
           <input type="number" id="scan-fat" min="0" step="any" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="scan-fiber">Fiber (g)</label>
+          <label for="scan-fiber" data-i18n="fiberGLabel">Fiber (g)</label>
           <input type="number" id="scan-fiber" min="0" step="any" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="scan-sugar">Sugar (g)</label>
+          <label for="scan-sugar" data-i18n="sugarGLabel">Sugar (g)</label>
           <input type="number" id="scan-sugar" min="0" step="any" inputmode="decimal">
         </div>
         <div class="field">
-          <label for="scan-sodium">Sodium (mg)</label>
+          <label for="scan-sodium" data-i18n="sodiumMgLabel">Sodium (mg)</label>
           <input type="number" id="scan-sodium" min="0" step="any" inputmode="decimal">
         </div>
       </div>
-      <p class="field-hint" id="scan-salt-note" hidden>Sodium was estimated from a salt/zout reading (salt g × 400) — double-check this one.</p>
+      <p class="field-hint" id="scan-salt-note" data-i18n="saltNote" hidden>Sodium was estimated from a salt/zout reading (salt g × 400) — double-check this one.</p>
 
       <div class="form-actions">
-        <button type="button" class="btn-primary btn-block" id="scan-use-btn">Continue to save</button>
-        <button type="button" class="btn-text btn-block" id="scan-rescan-btn">Try a different photo</button>
+        <button type="button" class="btn-primary btn-block" id="scan-use-btn" data-i18n="continueToSave">Continue to save</button>
+        <button type="button" class="btn-text btn-block" id="scan-rescan-btn" data-i18n="tryDifferentPhoto">Try a different photo</button>
       </div>
     </div>
 
     <div class="placeholder-panel" style="margin-top:16px;">
-      <p class="muted">Prefer typing it in? <button type="button" class="btn-text" data-nav="manual" style="display:inline;padding:0;">Add manually instead</button></p>
+      <p class="muted"><span data-i18n="preferTyping">Prefer typing it in?</span> <button type="button" class="btn-text" data-nav="manual" data-i18n="addManuallyInstead" style="display:inline;padding:0;">Add manually instead</button></p>
     </div>
   </main>
 
@@ -304,52 +307,52 @@
       <button class="icon-btn back-btn" data-nav="today" aria-label="Back">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <div><p class="eyebrow">Plate mode</p><h1 class="date-heading">Build a meal</h1></div>
+      <div><p class="eyebrow" data-i18n="plateModeEyebrow">Plate mode</p><h1 class="date-heading" data-i18n="buildMealHeading">Build a meal</h1></div>
     </header>
 
-    <p class="field-hint">Put the plate on the scale. Add one food at a time and type in whatever the scale reads — no need to zero between items, Plate will work out each item's weight from the running total. It'll flag if a reading looks like it was zeroed (lower than expected) so you can confirm or correct it.</p>
+    <p class="field-hint" data-i18n="buildMealHint">Put the plate on the scale. Add one food at a time and type in whatever the scale reads — no need to zero between items, Plate will work out each item's weight from the running total. It'll flag if a reading looks like it was zeroed (lower than expected) so you can confirm or correct it.</p>
 
     <div class="field">
-      <label for="build-meal-label">Meal <span class="optional">(optional)</span></label>
+      <label for="build-meal-label"><span data-i18n="mealLabel">Meal</span> <span class="optional" data-i18n="optional">(optional)</span></label>
       <select id="build-meal-label">
-        <option value="">No label</option>
-        <option value="breakfast">Breakfast</option>
-        <option value="lunch">Lunch</option>
-        <option value="dinner">Dinner</option>
-        <option value="snack">Snack</option>
+        <option value="" data-i18n="noLabelOption">No label</option>
+        <option value="breakfast" data-i18n="breakfastOption">Breakfast</option>
+        <option value="lunch" data-i18n="lunchOption">Lunch</option>
+        <option value="dinner" data-i18n="dinnerOption">Dinner</option>
+        <option value="snack" data-i18n="snackOption">Snack</option>
       </select>
     </div>
 
     <div class="plate-add-card">
       <div class="field">
-        <label for="plate-food-search">Food</label>
-        <input type="text" id="plate-food-search" placeholder="Search your library…" autocomplete="off">
+        <label for="plate-food-search" data-i18n="foodLabel">Food</label>
+        <input type="text" id="plate-food-search" data-i18n-placeholder="searchLibraryPlaceholder" placeholder="Search your library…" autocomplete="off">
         <div id="plate-food-dropdown" class="autocomplete-dropdown" hidden></div>
       </div>
 
       <div class="field">
-        <label for="plate-reading">Scale reading (g)</label>
-        <input type="number" id="plate-reading" min="0" step="any" inputmode="decimal" class="hero-input" placeholder="e.g. 142">
+        <label for="plate-reading" data-i18n="scaleReadingLabel">Scale reading (g)</label>
+        <input type="number" id="plate-reading" min="0" step="any" inputmode="decimal" class="hero-input" data-i18n-placeholder="scaleReadingPlaceholder" placeholder="e.g. 142">
       </div>
 
       <label class="checkbox-row">
         <input type="checkbox" id="plate-zeroed-toggle">
-        <span>Scale was zeroed before this item</span>
+        <span data-i18n="scaleZeroedCheckbox">Scale was zeroed before this item</span>
       </label>
 
       <p class="log-preview" id="plate-item-preview">—</p>
 
-      <button type="button" class="btn-primary btn-block" id="plate-confirm-item-btn">Add to plate</button>
+      <button type="button" class="btn-primary btn-block" id="plate-confirm-item-btn" data-i18n="addToPlateBtn">Add to plate</button>
       <p class="form-error" id="plate-item-error" hidden></p>
     </div>
 
     <section class="log-section">
-      <p class="section-label">On the plate</p>
+      <p class="section-label" data-i18n="onThePlateLabel">On the plate</p>
       <div id="plate-items-list" class="log-list">
-        <p class="empty-state">Nothing added yet.</p>
+        <p class="empty-state" data-i18n="plateEmptyState">Nothing added yet.</p>
       </div>
       <div class="plate-totals" id="plate-totals" hidden>
-        <span>Plate total</span>
+        <span data-i18n="plateTotalLabel">Plate total</span>
         <span class="kcal" id="plate-total-kcal">0 kcal</span>
       </div>
     </section>
@@ -357,13 +360,13 @@
     <div class="form-actions">
       <label class="checkbox-row" style="margin-bottom:2px;">
         <input type="checkbox" id="save-as-meal-toggle">
-        <span>Also save this as a quick-add meal (e.g. "Morning coffee")</span>
+        <span data-i18n="saveAsMealCheckbox">Also save this as a quick-add meal (e.g. "Morning coffee")</span>
       </label>
       <div class="field" id="save-as-meal-name-field" hidden>
-        <input type="text" id="save-as-meal-name" placeholder="Name this meal…">
+        <input type="text" id="save-as-meal-name" data-i18n-placeholder="mealNamePlaceholder" placeholder="Name this meal…">
       </div>
-      <button type="button" class="btn-primary btn-block" id="finish-meal-btn" disabled>Finish meal — add to today's log</button>
-      <button type="button" class="btn-text btn-block" id="cancel-meal-btn">Cancel and discard plate</button>
+      <button type="button" class="btn-primary btn-block" id="finish-meal-btn" data-i18n="finishMealBtn" disabled>Finish meal — add to today's log</button>
+      <button type="button" class="btn-text btn-block" id="cancel-meal-btn" data-i18n="cancelMealBtn">Cancel and discard plate</button>
     </div>
   </main>
 
@@ -380,29 +383,29 @@
       <input type="hidden" id="food-id">
 
       <div class="field">
-        <label for="food-name">Name</label>
-        <input type="text" id="food-name" placeholder="e.g. Chicken breast, raw" required>
+        <label for="food-name" data-i18n="nameLabel">Name</label>
+        <input type="text" id="food-name" data-i18n-placeholder="namePlaceholder" placeholder="e.g. Chicken breast, raw" required>
       </div>
 
       <div class="field">
-        <label for="food-brand">Brand <span class="optional">(optional)</span></label>
-        <input type="text" id="food-brand" placeholder="e.g. Jordans">
+        <label for="food-brand"><span data-i18n="brandLabel">Brand</span> <span class="optional" data-i18n="optional">(optional)</span></label>
+        <input type="text" id="food-brand" data-i18n-placeholder="brandPlaceholder" placeholder="e.g. Jordans">
       </div>
 
       <div class="field-row">
         <div class="field">
-          <label for="food-serving-amount">Serving size</label>
+          <label for="food-serving-amount" data-i18n="servingSizeLabel">Serving size</label>
           <input type="number" id="food-serving-amount" min="0" step="any" value="100" required>
         </div>
         <div class="field field--unit">
-          <label for="food-serving-unit">Unit</label>
+          <label for="food-serving-unit" data-i18n="unitLabel">Unit</label>
           <select id="food-serving-unit">
-            <optgroup label="Weight — exact">
+            <optgroup label="Weight — exact" data-i18n-label="weightExactOptgroup">
               <option value="g">g</option>
               <option value="oz">oz</option>
               <option value="lb">lb</option>
             </optgroup>
-            <optgroup label="Volume — approximate for non-liquids">
+            <optgroup label="Volume — approximate for non-liquids" data-i18n-label="volumeApproxOptgroup">
               <option value="ml">ml</option>
               <option value="tsp">tsp</option>
               <option value="tbsp">tbsp</option>
@@ -412,37 +415,37 @@
           </select>
         </div>
       </div>
-      <p class="field-hint" id="unit-hint">Values below are for this serving size.</p>
+      <p class="field-hint" id="unit-hint" data-i18n="unitHintDefault">Values below are for this serving size.</p>
 
       <div class="field field--hero">
-        <label for="food-calories">Calories <span class="required-star">*</span></label>
+        <label for="food-calories"><span data-i18n="caloriesLabel">Calories</span> <span class="required-star">*</span></label>
         <input type="number" id="food-calories" min="0" step="any" inputmode="decimal" required class="hero-input">
       </div>
 
-      <p class="section-label" style="margin-top:20px;">Macros (grams per serving)</p>
+      <p class="section-label" style="margin-top:20px;" data-i18n="macrosSectionLabel">Macros (grams per serving)</p>
       <div class="macro-grid">
         <div class="field">
-          <label for="food-protein">Protein</label>
+          <label for="food-protein" data-i18n="proteinLabel">Protein</label>
           <input type="number" id="food-protein" min="0" step="any" inputmode="decimal" value="0">
         </div>
         <div class="field">
-          <label for="food-carbs">Carbs</label>
+          <label for="food-carbs" data-i18n="carbsLabel">Carbs</label>
           <input type="number" id="food-carbs" min="0" step="any" inputmode="decimal" value="0">
         </div>
         <div class="field">
-          <label for="food-fat">Fat</label>
+          <label for="food-fat" data-i18n="fatLabel">Fat</label>
           <input type="number" id="food-fat" min="0" step="any" inputmode="decimal" value="0">
         </div>
         <div class="field">
-          <label for="food-fiber">Fiber</label>
+          <label for="food-fiber" data-i18n="fiberLabel">Fiber</label>
           <input type="number" id="food-fiber" min="0" step="any" inputmode="decimal" value="0">
         </div>
         <div class="field">
-          <label for="food-sugar">Sugar</label>
+          <label for="food-sugar" data-i18n="sugarLabel">Sugar</label>
           <input type="number" id="food-sugar" min="0" step="any" inputmode="decimal" value="0">
         </div>
         <div class="field">
-          <label for="food-sodium">Sodium (mg)</label>
+          <label for="food-sodium" data-i18n="sodiumMgLabel">Sodium (mg)</label>
           <input type="number" id="food-sodium" min="0" step="any" inputmode="decimal" value="0">
         </div>
       </div>
@@ -450,8 +453,8 @@
       <p class="form-error" id="form-error" hidden></p>
 
       <div class="form-actions">
-        <button type="submit" class="btn-primary btn-block">Save to library</button>
-        <button type="button" class="btn-danger btn-block" id="delete-food-btn" hidden>Delete from library</button>
+        <button type="submit" class="btn-primary btn-block" data-i18n="saveToLibraryBtn">Save to library</button>
+        <button type="button" class="btn-danger btn-block" id="delete-food-btn" data-i18n="deleteFromLibraryBtn" hidden>Delete from library</button>
       </div>
     </form>
   </main>
@@ -462,46 +465,46 @@
       <button class="icon-btn back-btn" data-nav="today" aria-label="Back">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <div><p class="eyebrow">Preferences</p><h1 class="date-heading">Settings</h1></div>
+      <div><p class="eyebrow" data-i18n="preferencesEyebrow">Preferences</p><h1 class="date-heading" data-i18n="settingsHeading">Settings</h1></div>
     </header>
 
     <button type="button" class="action-tile" data-nav="history" style="width:100%;margin-bottom:24px;">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg>
-      <span>View history</span>
+      <span data-i18n="viewHistoryBtn">View history</span>
     </button>
 
-    <p class="section-label">Daily goals <span class="optional">(optional — off by default)</span></p>
+    <p class="section-label"><span data-i18n="dailyGoalsLabel">Daily goals</span> <span class="optional" data-i18n="goalsOffByDefault">(optional — off by default)</span></p>
     <form id="goals-form">
       <div class="macro-grid">
         <div class="field">
-          <label for="goal-calories">Calories</label>
-          <input type="number" id="goal-calories" min="0" step="any" inputmode="decimal" placeholder="none set">
+          <label for="goal-calories" data-i18n="caloriesLabel">Calories</label>
+          <input type="number" id="goal-calories" min="0" step="any" inputmode="decimal" data-i18n-placeholder="noneSetPlaceholder" placeholder="none set">
         </div>
         <div class="field">
-          <label for="goal-protein">Protein (g)</label>
-          <input type="number" id="goal-protein" min="0" step="any" inputmode="decimal" placeholder="none set">
+          <label for="goal-protein" data-i18n="proteinGLabel">Protein (g)</label>
+          <input type="number" id="goal-protein" min="0" step="any" inputmode="decimal" data-i18n-placeholder="noneSetPlaceholder" placeholder="none set">
         </div>
         <div class="field">
-          <label for="goal-carbs">Carbs (g)</label>
-          <input type="number" id="goal-carbs" min="0" step="any" inputmode="decimal" placeholder="none set">
+          <label for="goal-carbs" data-i18n="carbsGLabel">Carbs (g)</label>
+          <input type="number" id="goal-carbs" min="0" step="any" inputmode="decimal" data-i18n-placeholder="noneSetPlaceholder" placeholder="none set">
         </div>
         <div class="field">
-          <label for="goal-fat">Fat (g)</label>
-          <input type="number" id="goal-fat" min="0" step="any" inputmode="decimal" placeholder="none set">
+          <label for="goal-fat" data-i18n="fatGLabel">Fat (g)</label>
+          <input type="number" id="goal-fat" min="0" step="any" inputmode="decimal" data-i18n-placeholder="noneSetPlaceholder" placeholder="none set">
         </div>
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn-primary btn-block">Save goals</button>
-        <button type="button" class="btn-text btn-block" id="clear-goals-btn">Clear all goals</button>
+        <button type="submit" class="btn-primary btn-block" data-i18n="saveGoalsBtn">Save goals</button>
+        <button type="button" class="btn-text btn-block" id="clear-goals-btn" data-i18n="clearGoalsBtn">Clear all goals</button>
       </div>
       <p class="form-status" id="goals-status" hidden></p>
     </form>
 
-    <p class="section-label" style="margin-top:28px;">Backup</p>
-    <p class="field-hint">Everything lives only in this browser on this device. Export a backup before switching browsers, switching devices, or clearing site data — and import it to restore.</p>
+    <p class="section-label" style="margin-top:28px;" data-i18n="backupLabel">Backup</p>
+    <p class="field-hint" data-i18n="backupHint">Everything lives only in this browser on this device. Export a backup before switching browsers, switching devices, or clearing site data — and import it to restore.</p>
     <div class="form-actions">
-      <button type="button" class="btn-secondary btn-block" id="export-data-btn">Export backup (.json)</button>
-      <label class="btn-secondary btn-block" for="import-data-input" style="text-align:center;display:block;">Import backup</label>
+      <button type="button" class="btn-secondary btn-block" id="export-data-btn" data-i18n="exportBtn">Export backup (.json)</button>
+      <label class="btn-secondary btn-block" for="import-data-input" style="text-align:center;display:block;" data-i18n="importBtn">Import backup</label>
       <input type="file" id="import-data-input" accept="application/json" hidden>
     </div>
     <p class="form-status" id="backup-status" hidden></p>
@@ -513,9 +516,9 @@
       <button class="icon-btn back-btn" data-nav="settings" aria-label="Back">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <div><p class="eyebrow">Past days</p><h1 class="date-heading">History</h1></div>
+      <div><p class="eyebrow" data-i18n="pastDaysEyebrow">Past days</p><h1 class="date-heading" data-i18n="historyHeading">History</h1></div>
     </header>
-    <p class="field-hint">Tap a day to see what was logged.</p>
+    <p class="field-hint" data-i18n="tapDayHint">Tap a day to see what was logged.</p>
     <div id="history-list"></div>
   </main>
 
@@ -545,30 +548,31 @@
 
   <!-- ===== Bottom nav ===== -->
   <nav class="bottom-nav" aria-label="Primary">
-    <button class="nav-btn is-active" data-nav="today" aria-label="Today">
+    <button class="nav-btn is-active" data-nav="today" data-i18n-aria="todayEyebrow" aria-label="Today">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>
-      <span>Today</span>
+      <span data-i18n="todayEyebrow">Today</span>
     </button>
-    <button class="nav-btn" data-nav="library" aria-label="Library">
+    <button class="nav-btn" data-nav="library" data-i18n-aria="libraryTile" aria-label="Library">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      <span>Library</span>
+      <span data-i18n="navLibrary">Library</span>
     </button>
-    <button class="nav-btn nav-btn--fab" data-nav="build" aria-label="Build a meal">
+    <button class="nav-btn nav-btn--fab" data-nav="build" data-i18n-aria="buildMealTile" aria-label="Build a meal">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="12" width="18" height="7" rx="1.5"/><path d="M7 12V9a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/><path d="M12 12V6"/></svg>
     </button>
-    <button class="nav-btn" data-nav="scan" aria-label="Scan">
+    <button class="nav-btn" data-nav="scan" data-i18n-aria="navScan" aria-label="Scan">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M4 16v3a1 1 0 0 0 1 1h3M20 8V5a1 1 0 0 0-1-1h-3M20 16v3a1 1 0 0 1-1 1h-3"/><circle cx="12" cy="12" r="3.2"/></svg>
-      <span>Scan</span>
+      <span data-i18n="navScan">Scan</span>
     </button>
-    <button class="nav-btn" data-nav="settings" aria-label="Settings">
+    <button class="nav-btn" data-nav="settings" data-i18n-aria="settingsAria" aria-label="Settings">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 0 6z"/></svg>
-      <span>More</span>
+      <span data-i18n="navMore">More</span>
     </button>
   </nav>
 
 </div>
 
 <script src="js/db.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/units.js"></script>
 <script src="js/starter-foods-data.js"></script>
 <script src="js/mealBuilder.js"></script>

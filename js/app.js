@@ -9,11 +9,21 @@ const VIEWS = ['today', 'library', 'scan', 'build', 'manual', 'settings', 'histo
 
 async function seedStarterFoods() {
   const seeded = await PlateDB.getSetting('starter_db_seeded', false);
-  if (seeded) return;
-  for (const food of STARTER_FOODS) {
-    await PlateDB.saveFoodItem(food);
+  if (!seeded) {
+    for (const food of STARTER_FOODS) {
+      await PlateDB.saveFoodItem(food);
+    }
+    await PlateDB.setSetting('starter_db_seeded', true);
+    return;
   }
-  await PlateDB.setSetting('starter_db_seeded', true);
+  // Already seeded before — but new starter items (like a later addition to
+  // STARTER_FOODS) still need to reach existing installs. Add only the ones
+  // missing by id, so this never overwrites a starter item the person has
+  // since edited or deleted on purpose.
+  for (const food of STARTER_FOODS) {
+    const existing = await PlateDB.getFoodItem(food.id);
+    if (!existing) await PlateDB.saveFoodItem(food);
+  }
 }
 
 function todayDateStr() {
@@ -23,7 +33,7 @@ function todayDateStr() {
 
 function formatDateHeading() {
   const d = new Date();
-  return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(currentLocale(), { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
 function showToast(message) {
@@ -100,8 +110,8 @@ async function renderToday() {
   if (goals.calories) {
     const remaining = Math.round(goals.calories - totals.calories);
     goalLineEl.textContent = remaining >= 0
-      ? `${remaining} kcal left of ${Math.round(goals.calories)} goal`
-      : `${Math.abs(remaining)} kcal over ${Math.round(goals.calories)} goal`;
+      ? t('kcalLeftOfGoal', remaining, Math.round(goals.calories))
+      : t('kcalOverGoal', Math.abs(remaining), Math.round(goals.calories));
     goalLineEl.hidden = false;
   } else {
     goalLineEl.hidden = true;
@@ -109,7 +119,7 @@ async function renderToday() {
 
   const listEl = document.getElementById('today-log-list');
   if (entries.length === 0) {
-    listEl.innerHTML = '<p class="empty-state">Nothing logged yet. Use one of the actions above to add your first item.</p>';
+    listEl.innerHTML = `<p class="empty-state">${t('todayEmptyState')}</p>`;
     return;
   }
 
@@ -143,10 +153,6 @@ function groupTodayEntries(entries) {
   return groups;
 }
 
-function capitalizeLabel(label) {
-  return label ? `${label[0].toUpperCase()}${label.slice(1)}` : '';
-}
-
 // The entries currently on screen, kept so click delegation on #today-log-list
 // can look an entry up by id without a fresh DB round-trip.
 let todayEntryCache = [];
@@ -156,17 +162,17 @@ let todayEntryCache = [];
 const expandedMealGroups = new Set();
 
 function estimatedBadge(e) {
-  return e.is_estimated ? '<span class="estimated-badge">Estimated</span>' : '';
+  return e.is_estimated ? `<span class="estimated-badge">${t('estimatedBadge')}</span>` : '';
 }
 
 function todayRowHtml(group) {
   if (group.items.length === 1) {
     const e = group.items[0];
-    const mealTag = e.meal_label ? ` · ${capitalizeLabel(e.meal_label)}` : '';
+    const mealTag = e.meal_label ? ` · ${mealLabelText(e.meal_label)}` : '';
     return `
       <div class="log-item is-tappable" data-action="edit-entry" data-id="${e.id}" role="button" tabindex="0">
         <div>
-          <div class="name">${escapeHtml(e.name || 'Item')}${estimatedBadge(e)}</div>
+          <div class="name">${escapeHtml(e.name || t('itemFallbackName'))}${estimatedBadge(e)}</div>
           <div class="detail">${escapeHtml(e.serving_display || '')}${mealTag}</div>
         </div>
         <div class="kcal">${Math.round(e.calories || 0)}</div>
@@ -175,8 +181,8 @@ function todayRowHtml(group) {
 
   // Consolidated meal: one expandable card for all entries sharing a meal_group_id.
   const total = group.items.reduce((sum, e) => sum + (e.calories || 0), 0);
-  const label = capitalizeLabel(group.items[0].meal_label) || 'Meal';
-  const itemNames = group.items.map((e) => escapeHtml(e.name || 'Item')).join(', ');
+  const label = mealLabelText(group.items[0].meal_label) || t('mealFallbackLabel');
+  const itemNames = group.items.map((e) => escapeHtml(e.name || t('itemFallbackName'))).join(', ');
   const isOpen = expandedMealGroups.has(group.groupId);
 
   const subitems = group.items
@@ -184,12 +190,12 @@ function todayRowHtml(group) {
       (e) => `
       <div class="meal-subitem is-tappable" data-action="edit-entry" data-id="${e.id}" role="button" tabindex="0">
         <div>
-          <div class="name">${escapeHtml(e.name || 'Item')}${estimatedBadge(e)}</div>
+          <div class="name">${escapeHtml(e.name || t('itemFallbackName'))}${estimatedBadge(e)}</div>
           <div class="detail">${escapeHtml(e.serving_display || '')}</div>
         </div>
         <div class="log-item-actions">
           <div class="kcal">${Math.round(e.calories || 0)}</div>
-          <button type="button" class="row-icon-btn" data-action="delete-entry" data-id="${e.id}" aria-label="Delete this item">
+          <button type="button" class="row-icon-btn" data-action="delete-entry" data-id="${e.id}" aria-label="${t('deleteThisItemAria')}">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
           </button>
         </div>
@@ -201,12 +207,12 @@ function todayRowHtml(group) {
     <div class="meal-group-card">
       <div class="log-item meal-group-summary" data-action="toggle-group" data-group-id="${group.groupId}" role="button" tabindex="0">
         <div>
-          <div class="name">${label} <span class="meal-group-count">· ${group.items.length} items</span></div>
+          <div class="name">${label} <span class="meal-group-count">· ${group.items.length} ${t('itemsSuffix')}</span></div>
           <div class="detail">${itemNames}</div>
         </div>
         <div class="log-item-actions">
           <div class="kcal">${Math.round(total)}</div>
-          <button type="button" class="row-icon-btn" data-action="delete-group" data-group-id="${group.groupId}" aria-label="Delete this whole meal">
+          <button type="button" class="row-icon-btn" data-action="delete-group" data-group-id="${group.groupId}" aria-label="${t('deleteWholeMealAria')}">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
           </button>
           <svg class="chevron${isOpen ? ' is-open' : ''}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
@@ -234,7 +240,7 @@ async function handleTodayListClick(evt) {
     evt.stopPropagation();
     const groupId = btn.dataset.groupId;
     const items = todayEntryCache.filter((e) => e.meal_group_id === groupId);
-    if (!confirm(`Delete this whole meal (${items.length} item${items.length === 1 ? '' : 's'})? This can't be undone.`)) return;
+    if (!confirm(t('deleteMealConfirm', items.length))) return;
     for (const item of items) await PlateDB.deleteLogEntry(item.id);
     expandedMealGroups.delete(groupId);
     renderToday();
@@ -244,7 +250,7 @@ async function handleTodayListClick(evt) {
   if (action === 'delete-entry') {
     evt.stopPropagation();
     const id = btn.dataset.id;
-    if (!confirm('Delete this entry?')) return;
+    if (!confirm(t('deleteEntryConfirm'))) return;
     await PlateDB.deleteLogEntry(id);
     renderToday();
     return;
@@ -281,14 +287,14 @@ function libraryRowHtml(item) {
   return `
     <div class="log-item is-tappable" data-id="${item.id}" role="button" tabindex="0">
       <div>
-        <div class="name">${escapeHtml(item.name)}</div>
-        <div class="detail">per ${servingAmount}${unitLabel}${item.brand ? ' · ' + escapeHtml(item.brand) : ''}</div>
+        <div class="name">${escapeHtml(displayFoodName(item))}</div>
+        <div class="detail">${t('perServing', servingAmount, unitLabel)}${item.brand ? ' · ' + escapeHtml(item.brand) : ''}</div>
       </div>
       <div class="log-item-actions">
-        <button type="button" class="row-icon-btn${item.favorite ? ' is-favorite' : ''}" data-action="favorite" data-id="${item.id}" aria-label="Toggle favorite" aria-pressed="${item.favorite ? 'true' : 'false'}">
+        <button type="button" class="row-icon-btn${item.favorite ? ' is-favorite' : ''}" data-action="favorite" data-id="${item.id}" aria-label="${t('toggleFavoriteAria')}" aria-pressed="${item.favorite ? 'true' : 'false'}">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="${item.favorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         </button>
-        <button type="button" class="row-icon-btn" data-action="edit" data-id="${item.id}" aria-label="Edit food">
+        <button type="button" class="row-icon-btn" data-action="edit" data-id="${item.id}" aria-label="${t('editFoodAria')}">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
         <div class="kcal">${kcalForServing}</div>
@@ -307,7 +313,7 @@ async function getVisibleLibraryItems() {
   } else if (libraryFilter === 'recent') {
     filtered = filtered.filter((i) => i.last_used_at);
   }
-  if (q) filtered = filtered.filter((i) => i.name.toLowerCase().includes(q));
+  if (q) filtered = filtered.filter((i) => displayFoodName(i).toLowerCase().includes(q));
 
   filtered = libraryFilter === 'recent'
     ? filtered.sort((a, b) => (b.last_used_at || '').localeCompare(a.last_used_at || '')).slice(0, 15)
@@ -316,29 +322,34 @@ async function getVisibleLibraryItems() {
   return filtered;
 }
 
-const LIBRARY_EMPTY_MESSAGES = {
-  all: 'Your library is empty. Anything you scan or add manually will be saved here for quick reuse.',
-  favorites: 'No favorites yet. Tap the star on any food to add it here.',
-  recent: "Nothing logged yet — foods you've used will show up here.",
-  meals: 'No quick-add meals yet. Build one in "Build a meal" and check "save as quick-add meal".',
-};
+function libraryEmptyMessages() {
+  return {
+    all: t('libraryEmptyState'),
+    favorites: t('noFavoritesEmpty'),
+    recent: t('noRecentEmpty'),
+    meals: t('noMealsEmpty'),
+  };
+}
 
-const LIBRARY_HINTS = {
-  all: 'Tap a food to log it to today. Use the star to favorite, the pencil to edit.',
-  favorites: 'Tap a food to log it to today. Use the star to favorite, the pencil to edit.',
-  recent: 'Tap a food to log it to today. Use the star to favorite, the pencil to edit.',
-  meals: 'Tap a meal to log all its items to today instantly. Use the trash icon to remove it.',
-};
+function libraryHints() {
+  return {
+    all: t('libraryHint'),
+    favorites: t('libraryHint'),
+    recent: t('libraryHint'),
+    meals: t('mealsHint'),
+  };
+}
 
 function mealTemplateRowHtml(meal) {
+  const mealTag = meal.meal_label ? ' · ' + mealLabelText(meal.meal_label) : '';
   return `
     <div class="log-item is-tappable" data-type="meal" data-id="${meal.id}" role="button" tabindex="0">
       <div>
         <div class="name">${escapeHtml(meal.name)}</div>
-        <div class="detail">${meal.items.length} item${meal.items.length === 1 ? '' : 's'}${meal.meal_label ? ' · ' + meal.meal_label[0].toUpperCase() + meal.meal_label.slice(1) : ''}</div>
+        <div class="detail">${meal.items.length} ${t('itemsSuffix')}${mealTag}</div>
       </div>
       <div class="log-item-actions">
-        <button type="button" class="row-icon-btn" data-action="delete-meal" data-id="${meal.id}" aria-label="Delete this quick-add meal">
+        <button type="button" class="row-icon-btn" data-action="delete-meal" data-id="${meal.id}" aria-label="${t('deleteMealTemplateAria')}">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
         </button>
       </div>
@@ -347,7 +358,7 @@ function mealTemplateRowHtml(meal) {
 
 async function renderLibrary() {
   const listEl = document.getElementById('library-list');
-  document.getElementById('library-hint').textContent = LIBRARY_HINTS[libraryFilter];
+  document.getElementById('library-hint').textContent = libraryHints()[libraryFilter];
 
   if (libraryFilter === 'meals') {
     const meals = await PlateDB.getAllMealTemplates();
@@ -358,7 +369,7 @@ async function renderLibrary() {
 
     listEl.innerHTML = filtered.length
       ? filtered.map(mealTemplateRowHtml).join('')
-      : `<p class="empty-state">${q ? 'No matches.' : LIBRARY_EMPTY_MESSAGES.meals}</p>`;
+      : `<p class="empty-state">${q ? t('noMatches') : libraryEmptyMessages().meals}</p>`;
     return;
   }
 
@@ -366,7 +377,7 @@ async function renderLibrary() {
   if (items.length === 0) {
     const searchInput = document.getElementById('library-search');
     const hasQuery = searchInput && searchInput.value.trim();
-    listEl.innerHTML = `<p class="empty-state">${hasQuery ? 'No matches.' : LIBRARY_EMPTY_MESSAGES[libraryFilter]}</p>`;
+    listEl.innerHTML = `<p class="empty-state">${hasQuery ? t('noMatches') : libraryEmptyMessages()[libraryFilter]}</p>`;
     return;
   }
 
@@ -397,7 +408,7 @@ async function logMealTemplateNow(template) {
     await PlateDB.saveLogEntry({
       date,
       food_item_id: food.id,
-      name: food.name,
+      name: displayFoodName(food),
       quantity: templateItem.weight,
       unit: 'g',
       meal_label: template.meal_label,
@@ -417,13 +428,13 @@ async function logMealTemplateNow(template) {
   }
 
   if (loggedCount === 0) {
-    alert(`Couldn't log "${template.name}" — the foods it used seem to have been removed from your library.`);
+    alert(t('templateLogFailedAlert', template.name));
     return;
   }
   if (loggedCount < template.items.length) {
-    showToast(`Logged "${template.name}" (${loggedCount}/${template.items.length} items — some were missing)`);
+    showToast(t('templateLogPartialToast', template.name, loggedCount, template.items.length));
   } else {
-    showToast(`Logged "${template.name}"`);
+    showToast(t('templateLoggedToast', template.name));
   }
   showView('today');
 }
@@ -440,7 +451,7 @@ async function handleLibraryListClick(evt) {
       const item = await PlateDB.getFoodItem(id);
       if (item) openManualForm(item);
     } else if (actionBtn.dataset.action === 'delete-meal') {
-      if (confirm('Remove this quick-add meal? This does not affect anything already logged.')) {
+      if (confirm(t('removeMealTemplateConfirm'))) {
         await PlateDB.deleteMealTemplate(id);
         renderLibrary();
       }
@@ -540,22 +551,22 @@ function openManualForm(item) {
   if (item && item.id) {
     populateFormFromItem(els, item);
     els.id.value = item.id;
-    els.heading.textContent = 'Edit food';
-    els.eyebrow.textContent = 'Editing';
+    els.heading.textContent = t('editFoodHeading');
+    els.eyebrow.textContent = t('editingEyebrow');
     els.deleteBtn.hidden = false;
   } else if (item) {
     populateFormFromItem(els, item);
     els.id.value = '';
-    els.heading.textContent = 'From scan';
-    els.eyebrow.textContent = 'Check the numbers';
+    els.heading.textContent = t('fromScanHeading');
+    els.eyebrow.textContent = t('fromScanEyebrow');
     els.deleteBtn.hidden = true;
   } else {
     els.id.value = '';
     els.servingAmount.value = 100;
     els.calories.value = '';
     ['protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium'].forEach((k) => (els[k].value = 0));
-    els.heading.textContent = 'New food';
-    els.eyebrow.textContent = 'Add item';
+    els.heading.textContent = t('newFoodHeading');
+    els.eyebrow.textContent = t('addItemEyebrow');
     els.deleteBtn.hidden = true;
   }
 
@@ -577,7 +588,7 @@ async function handleFoodFormSubmit(evt) {
   const calories = num(els.calories);
 
   if (!name || servingAmount <= 0 || els.calories.value === '') {
-    els.error.textContent = 'Name, a serving size greater than 0, and calories are required.';
+    els.error.textContent = t('formErrorRequired');
     els.error.hidden = false;
     return;
   }
@@ -607,15 +618,15 @@ async function handleFoodFormSubmit(evt) {
     // if this ever throws or comes back empty, something is genuinely wrong
     // and the person needs to see that, not a form that just quietly resets.
     const confirmed = await PlateDB.getFoodItem(saved.id);
-    if (!confirmed) throw new Error('Save did not stick — please try again.');
+    if (!confirmed) throw new Error(t('saveDidNotStick'));
   } catch (err) {
     console.error('Failed to save food item:', err);
-    els.error.textContent = `Couldn't save this food: ${err.message}. Please try again.`;
+    els.error.textContent = t('formErrorSaveFail', err.message);
     els.error.hidden = false;
     return;
   }
 
-  showToast(existing ? `Saved changes to ${name}` : `Added "${name}" to your library`);
+  showToast(existing ? t('savedChangesToToast', name) : t('addedToLibraryToast', name));
   showView('today');
 }
 
@@ -623,7 +634,7 @@ async function handleDeleteFood() {
   const els = foodFormEls();
   const id = els.id.value;
   if (!id) return;
-  if (!confirm('Remove this food from your library? This does not affect anything already logged.')) return;
+  if (!confirm(t('removeFoodConfirm'))) return;
   await PlateDB.deleteFoodItem(id);
   showView('library');
 }
@@ -639,7 +650,7 @@ function openLogSheet(item) {
   const servingAmount = (item.default_serving && item.default_serving.amount) || 100;
   const unit = (item.default_serving && item.default_serving.unit) || 'g';
 
-  document.getElementById('log-sheet-name').textContent = item.name;
+  document.getElementById('log-sheet-name').textContent = displayFoodName(item);
   document.getElementById('log-amount').value = servingAmount;
   document.getElementById('log-unit').textContent = unit;
   document.getElementById('log-meal-label').value = '';
@@ -763,7 +774,7 @@ async function openEntrySheet(entry) {
   els.deleteBtn.hidden = false;
 
   if (activeEntryMode === 'scaled') {
-    els.eyebrow.textContent = entry.name || 'Edit logged item';
+    els.eyebrow.textContent = entry.name || t('editEntryEyebrow');
     els.nameField.hidden = true;
     els.amountField.hidden = false;
     els.amount.value = entry.quantity || '';
@@ -771,10 +782,10 @@ async function openEntrySheet(entry) {
     els.caloriesField.hidden = true;
     els.macroFields.hidden = true;
     els.estimatedHint.hidden = true;
-    els.saveBtn.textContent = 'Save changes';
+    els.saveBtn.textContent = t('saveChanges');
     updateEntrySheetPreview();
   } else {
-    els.eyebrow.textContent = 'Edit estimated entry';
+    els.eyebrow.textContent = t('editEstimatedEntryEyebrow');
     els.nameField.hidden = false;
     els.name.value = entry.name || '';
     els.amountField.hidden = true;
@@ -785,7 +796,7 @@ async function openEntrySheet(entry) {
     els.carbs.value = entry.carbs_g ? round(entry.carbs_g) : '';
     els.fat.value = entry.fat_g ? round(entry.fat_g) : '';
     els.estimatedHint.hidden = false;
-    els.saveBtn.textContent = 'Save changes';
+    els.saveBtn.textContent = t('saveChanges');
     updateEntrySheetPreview();
   }
 
@@ -799,7 +810,7 @@ function openEstimateSheet() {
 
   const els = entrySheetEls();
   els.error.hidden = true;
-  els.eyebrow.textContent = 'Estimate a meal';
+  els.eyebrow.textContent = t('estimateMealEyebrow');
   els.nameField.hidden = false;
   els.name.value = '';
   els.amountField.hidden = true;
@@ -811,7 +822,7 @@ function openEstimateSheet() {
   els.fat.value = '';
   els.mealLabel.value = '';
   els.estimatedHint.hidden = false;
-  els.saveBtn.textContent = 'Add to today\u2019s log';
+  els.saveBtn.textContent = t('addToTodaysLog');
   els.deleteBtn.hidden = true;
   updateEntrySheetPreview();
 
@@ -844,7 +855,7 @@ async function handleEntrySheetSave() {
   if (activeEntryMode === 'scaled') {
     const amount = parseFloat(els.amount.value);
     if (!Number.isFinite(amount) || amount <= 0) {
-      els.error.textContent = 'Enter an amount greater than 0.';
+      els.error.textContent = t('amountError');
       els.error.hidden = false;
       return;
     }
@@ -867,12 +878,12 @@ async function handleEntrySheetSave() {
     const name = els.name.value.trim();
     const calories = parseFloat(els.calories.value);
     if (!name) {
-      els.error.textContent = 'Give this meal a name.';
+      els.error.textContent = t('nameRequiredError');
       els.error.hidden = false;
       return;
     }
     if (!Number.isFinite(calories) || calories <= 0) {
-      els.error.textContent = 'Enter a rough calorie count greater than 0.';
+      els.error.textContent = t('caloriesRequiredError');
       els.error.hidden = false;
       return;
     }
@@ -897,13 +908,13 @@ async function handleEntrySheetSave() {
 
   const wasNew = !activeEntry;
   closeEntrySheet();
-  showToast(wasNew ? 'Added to today\u2019s log' : 'Saved changes');
+  showToast(wasNew ? t('addedToTodaysLogToast') : t('savedChangesToast'));
   renderToday();
 }
 
 async function handleEntrySheetDelete() {
   if (!activeEntry) return;
-  if (!confirm('Delete this entry?')) return;
+  if (!confirm(t('deleteEntryConfirm'))) return;
   await PlateDB.deleteLogEntry(activeEntry.id);
   closeEntrySheet();
   renderToday();
@@ -937,6 +948,8 @@ function registerServiceWorker() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initLanguage();
+  wireLanguageToggle();
   wireNav();
   wireTodayListDelegation();
   wireLibrarySearch();

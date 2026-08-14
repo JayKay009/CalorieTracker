@@ -246,19 +246,19 @@ function setScanStatus(text) {
 async function handleScanRead() {
   if (!scanState.file) return;
   showScanPanel('progress');
-  setScanStatus('Loading OCR engine…');
+  setScanStatus(t('ocrLoadingEngine'));
 
   try {
     const [Tesseract, canvas] = await Promise.all([loadTesseract(), downscaleImageToCanvas(scanState.file)]);
     const { inverted } = preprocessCanvasForOcr(canvas);
 
-    setScanStatus(inverted ? 'Reading label (light-on-dark detected)…' : 'Reading label (English + Dutch)…');
+    setScanStatus(inverted ? t('ocrReadingInverted') : t('ocrReadingNormal'));
     const { data } = await Tesseract.recognize(canvas, 'eng+nld', {
       logger: (m) => {
         if (m.status === 'recognizing text' && typeof m.progress === 'number') {
-          setScanStatus(`Reading label… ${Math.round(m.progress * 100)}%`);
+          setScanStatus(t('ocrReadingProgress', Math.round(m.progress * 100)));
         } else if (m.status && m.status.includes('loading')) {
-          setScanStatus('Loading language data (first scan is slower)…');
+          setScanStatus(t('ocrLoadingLangData'));
         }
       },
     });
@@ -268,7 +268,7 @@ async function handleScanRead() {
     renderScanResults(parsed);
     showScanPanel('results');
   } catch (err) {
-    alert(`Couldn't read that label: ${err.message}\n\nYou can try a clearer photo, or add the food manually instead.`);
+    alert(t('ocrReadFailed', err.message));
     showScanPanel('preview');
   }
 }

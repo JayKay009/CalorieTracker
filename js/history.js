@@ -26,13 +26,13 @@ function lastNDateStrings(n) {
 function formatHistoryDate(dateStr) {
   const d = new Date(`${dateStr}T00:00:00`);
   const today = todayDateStr();
-  if (dateStr === today) return 'Today';
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  if (dateStr === today) return t('todayLabel');
+  return d.toLocaleDateString(currentLocale(), { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 function formatDayDetailHeading(dateStr) {
   const d = new Date(`${dateStr}T00:00:00`);
-  return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(currentLocale(), { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
 async function renderHistory() {
@@ -72,11 +72,11 @@ const dayDetailExpandedGroups = new Set();
 function dayDetailRowHtml(group) {
   if (group.items.length === 1) {
     const e = group.items[0];
-    const mealTag = e.meal_label ? ` · ${capitalizeLabel(e.meal_label)}` : '';
+    const mealTag = e.meal_label ? ` · ${mealLabelText(e.meal_label)}` : '';
     return `
       <div class="log-item">
         <div>
-          <div class="name">${escapeHtml(e.name || 'Item')}${estimatedBadge(e)}</div>
+          <div class="name">${escapeHtml(e.name || t('itemFallbackName'))}${estimatedBadge(e)}</div>
           <div class="detail">${escapeHtml(e.serving_display || '')}${mealTag}</div>
         </div>
         <div class="kcal">${Math.round(e.calories || 0)}</div>
@@ -84,8 +84,8 @@ function dayDetailRowHtml(group) {
   }
 
   const total = group.items.reduce((sum, e) => sum + (e.calories || 0), 0);
-  const label = capitalizeLabel(group.items[0].meal_label) || 'Meal';
-  const itemNames = group.items.map((e) => escapeHtml(e.name || 'Item')).join(', ');
+  const label = mealLabelText(group.items[0].meal_label) || t('mealFallbackLabel');
+  const itemNames = group.items.map((e) => escapeHtml(e.name || t('itemFallbackName'))).join(', ');
   const isOpen = dayDetailExpandedGroups.has(group.groupId);
 
   const subitems = group.items
@@ -93,7 +93,7 @@ function dayDetailRowHtml(group) {
       (e) => `
       <div class="meal-subitem">
         <div>
-          <div class="name">${escapeHtml(e.name || 'Item')}${estimatedBadge(e)}</div>
+          <div class="name">${escapeHtml(e.name || t('itemFallbackName'))}${estimatedBadge(e)}</div>
           <div class="detail">${escapeHtml(e.serving_display || '')}</div>
         </div>
         <div class="kcal">${Math.round(e.calories || 0)}</div>
@@ -105,7 +105,7 @@ function dayDetailRowHtml(group) {
     <div class="meal-group-card">
       <div class="log-item meal-group-summary is-tappable" data-action="toggle-day-group" data-group-id="${group.groupId}" role="button" tabindex="0">
         <div>
-          <div class="name">${label} <span class="meal-group-count">· ${group.items.length} items</span></div>
+          <div class="name">${label} <span class="meal-group-count">· ${group.items.length} ${t('itemsSuffix')}</span></div>
           <div class="detail">${itemNames}</div>
         </div>
         <div class="log-item-actions">
@@ -143,7 +143,7 @@ async function renderDayDetail(dateStr) {
   );
 
   document.getElementById('day-detail-eyebrow').textContent =
-    dateStr === todayDateStr() ? 'Today' : 'Logged that day';
+    dateStr === todayDateStr() ? t('todayLabel') : t('loggedThatDayEyebrow');
   document.getElementById('day-detail-date').textContent = formatDayDetailHeading(dateStr);
   document.getElementById('day-detail-calories').textContent = Math.round(totals.calories);
   document.getElementById('day-detail-protein').textContent = `${round(totals.protein)}g`;
@@ -152,7 +152,7 @@ async function renderDayDetail(dateStr) {
 
   const listEl = document.getElementById('day-detail-list');
   if (entries.length === 0) {
-    listEl.innerHTML = '<p class="empty-state">Nothing was logged this day.</p>';
+    listEl.innerHTML = `<p class="empty-state">${t('dayEmptyState')}</p>`;
     return;
   }
   listEl.innerHTML = groupTodayEntries(entries).map(dayDetailRowHtml).join('');

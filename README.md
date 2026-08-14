@@ -15,6 +15,14 @@ enough context to keep going — no need to re-explain the idea from scratch.
 
 ## What's built
 
+- **English/Dutch language toggle**: a "Nederlands"/"English" button in the
+  Today header. English is the default and is never written to storage;
+  switching to Dutch saves that choice (localStorage), switching back to
+  English just clears it. All UI text, dates, and the 21 built-in starter
+  foods translate; anything scanned or typed in by hand keeps its own name
+  regardless of language, since only starter foods carry a Dutch name
+  alongside the English one. See "Adding or changing UI text" below if
+  you're extending this.
 - **Library**: add/edit/delete foods, stored as a per-100g (or per-100ml)
   baseline so any serving size scales consistently. Favorites, recently-used,
   and quick-add-meals tabs, plus search.
@@ -56,6 +64,18 @@ enough context to keep going — no need to re-explain the idea from scratch.
   and installable to a phone home screen.
 
 ## Things worth knowing if you're debugging this
+
+- **Adding or changing UI text**: strings live in `js/i18n.js`'s `STRINGS`
+  dictionary (`en` and `nl`, always kept in parity — every key must exist in
+  both). Static markup uses `data-i18n` / `data-i18n-placeholder` /
+  `data-i18n-aria` / `data-i18n-label` attributes on the element in
+  `index.html`; JS-generated text calls `t('key', ...args)`. Watch for one
+  trap: `data-i18n` on an element that has a nested child element will wipe
+  that child when translated (`el.textContent = ...` replaces everything
+  inside) — put a separate `data-i18n` span on each piece of text instead of
+  nesting them. Meal labels (breakfast/lunch/dinner/snack) are stored as
+  fixed English keys in the data regardless of UI language; only their
+  *display* is translated, via `mealLabelText()`, never the stored value.
 
 - **OCR is heuristic text parsing**, not guaranteed-correct. It'll
   occasionally misread a character (a 'g' as a '9', a missed comma) — that's

@@ -36,7 +36,7 @@ async function handleGoalsFormSubmit(evt) {
       await PlateDB.setSetting(GOAL_KEYS[key], Number.isFinite(num) ? num : null);
     }
   }
-  showFormStatus('goals-status', 'Goals saved.');
+  showFormStatus('goals-status', t('goalsSaved'));
 }
 
 async function handleClearGoals() {
@@ -44,7 +44,7 @@ async function handleClearGoals() {
     await PlateDB.setSetting(GOAL_KEYS[key], null);
   }
   await loadGoalsIntoForm();
-  showFormStatus('goals-status', 'Goals cleared.');
+  showFormStatus('goals-status', t('goalsCleared'));
 }
 
 function showFormStatus(elId, message) {
@@ -78,7 +78,7 @@ async function handleExportData() {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  showFormStatus('backup-status', 'Backup downloaded.');
+  showFormStatus('backup-status', t('backupDownloaded'));
 }
 
 async function handleImportData(evt) {
@@ -89,18 +89,17 @@ async function handleImportData(evt) {
     const text = await file.text();
     const data = JSON.parse(text);
     if (!data || (!data.foodItems && !data.logEntries && !data.settings)) {
-      throw new Error('This file doesn\'t look like a Plate backup.');
+      throw new Error(t('notAPlateBackup'));
     }
     const confirmed = confirm(
-      `Import ${(data.foodItems || []).length} library items and ${(data.logEntries || []).length} log entries? ` +
-      `This merges with what's already here (matching IDs get overwritten).`
+      t('importConfirm', (data.foodItems || []).length, (data.logEntries || []).length)
     );
     if (!confirmed) return;
     await PlateDB.importAll(data);
-    showFormStatus('backup-status', 'Backup imported.');
+    showFormStatus('backup-status', t('backupImported'));
     if (document.getElementById('view-today') && !document.getElementById('view-today').hidden) renderToday();
   } catch (err) {
-    showFormStatus('backup-status', `Import failed: ${err.message}`);
+    showFormStatus('backup-status', t('importFailed', err.message));
   } finally {
     evt.target.value = '';
   }

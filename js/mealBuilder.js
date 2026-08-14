@@ -50,7 +50,7 @@ function computePlateItemWeight(reading, previousTotal, userForcedZeroed) {
 
 function findFoodByExactName(name) {
   const lower = name.trim().toLowerCase();
-  return plateFoodCache.find((f) => f.name.toLowerCase() === lower) || null;
+  return plateFoodCache.find((f) => displayFoodName(f).toLowerCase() === lower) || null;
 }
 
 function hidePlateFoodDropdown() {
@@ -67,10 +67,10 @@ function renderPlateFoodDropdown(query) {
     return;
   }
 
-  const matches = plateFoodCache.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 8);
+  const matches = plateFoodCache.filter((f) => displayFoodName(f).toLowerCase().includes(q)).slice(0, 8);
   dropdown.innerHTML = matches.length
-    ? matches.map((f) => `<div class="autocomplete-option" data-id="${f.id}">${escapeHtml(f.name)}</div>`).join('')
-    : '<div class="autocomplete-empty">No matching foods in your library.</div>';
+    ? matches.map((f) => `<div class="autocomplete-option" data-id="${f.id}">${escapeHtml(displayFoodName(f))}</div>`).join('')
+    : `<div class="autocomplete-empty">${t('noMatchingFoods')}</div>`;
   dropdown.hidden = false;
 }
 
@@ -78,7 +78,7 @@ function selectPlateFoodById(id) {
   const food = plateFoodCache.find((f) => f.id === id);
   if (!food) return;
   plateSelectedFood = food;
-  document.getElementById('plate-food-search').value = food.name;
+  document.getElementById('plate-food-search').value = displayFoodName(food);
   hidePlateFoodDropdown();
   updatePlateItemPreview();
   document.getElementById('plate-reading').focus();
@@ -90,18 +90,18 @@ function updatePlateItemPreview() {
   errorEl.hidden = true;
 
   const name = document.getElementById('plate-food-search').value.trim();
-  const food = plateSelectedFood && plateSelectedFood.name === name ? plateSelectedFood : findFoodByExactName(name);
+  const food = plateSelectedFood && displayFoodName(plateSelectedFood) === name ? plateSelectedFood : findFoodByExactName(name);
   plateSelectedFood = food;
 
   const readingInput = document.getElementById('plate-reading');
   const reading = parseFloat(readingInput.value);
 
   if (!food) {
-    previewEl.textContent = name ? 'Pick a food from the list below (type to search).' : '—';
+    previewEl.textContent = name ? t('platePickFoodPrompt') : '—';
     return { valid: false };
   }
   if (!Number.isFinite(reading) || reading < 0) {
-    previewEl.textContent = `${food.name} — enter the scale reading`;
+    previewEl.textContent = t('platePreviewEnterReading', displayFoodName(food));
     return { valid: false };
   }
 
@@ -114,12 +114,12 @@ function updatePlateItemPreview() {
   }
 
   if (weight <= 0) {
-    previewEl.textContent = "That reading doesn't work out to a positive weight — check the toggle above.";
+    previewEl.textContent = t('plateInvalidWeight');
     return { valid: false };
   }
 
   const kcal = Math.round((food.calories_per_100 || 0) * (weight / 100));
-  previewEl.textContent = `${food.name} — ${round(weight)}g · ${kcal} kcal${zeroed ? ' (scale was zeroed)' : ''}`;
+  previewEl.textContent = t('platePreviewLine', displayFoodName(food), round(weight), kcal, zeroed);
   return { valid: true, food, weight, kcal };
 }
 
@@ -127,12 +127,12 @@ function plateItemRowHtml(item, index) {
   return `
     <div class="log-item">
       <div>
-        <div class="name">${escapeHtml(item.name)}${item.zeroed ? '<span class="zeroed-chip">zeroed</span>' : ''}</div>
+        <div class="name">${escapeHtml(item.name)}${item.zeroed ? `<span class="zeroed-chip">${t('zeroedChip')}</span>` : ''}</div>
         <div class="detail">${round(item.weight)}g</div>
       </div>
       <div class="log-item-actions">
         <div class="kcal">${Math.round(item.calories)}</div>
-        <button type="button" class="row-icon-btn" data-remove-index="${index}" aria-label="Remove from plate">
+        <button type="button" class="row-icon-btn" data-remove-index="${index}" aria-label="${t('removeFromPlateAria')}">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
@@ -145,7 +145,7 @@ function renderPlateItems() {
   const finishBtn = document.getElementById('finish-meal-btn');
 
   if (!plateSession.items.length) {
-    listEl.innerHTML = '<p class="empty-state">Nothing added yet.</p>';
+    listEl.innerHTML = `<p class="empty-state">${t('plateEmptyState')}</p>`;
     totalsEl.hidden = true;
     finishBtn.disabled = true;
     return;
@@ -161,7 +161,7 @@ function renderPlateItems() {
 function handlePlateConfirmItem() {
   const result = updatePlateItemPreview();
   if (!result.valid) {
-    document.getElementById('plate-item-error').textContent = 'Pick a valid food and a scale reading before adding it to the plate.';
+    document.getElementById('plate-item-error').textContent = t('plateItemErrorGeneric');
     document.getElementById('plate-item-error').hidden = false;
     return;
   }
@@ -175,7 +175,7 @@ function handlePlateConfirmItem() {
 
   plateSession.items.push({
     food_item_id: food.id,
-    name: food.name,
+    name: displayFoodName(food),
     weight,
     zeroed,
     calories: (food.calories_per_100 || 0) * scale,
@@ -222,7 +222,7 @@ async function handleFinishMeal() {
   const saveAsMeal = document.getElementById('save-as-meal-toggle').checked;
   const mealName = document.getElementById('save-as-meal-name').value.trim();
   if (saveAsMeal && !mealName) {
-    document.getElementById('plate-item-error').textContent = 'Give the quick-add meal a name, or uncheck "save as quick-add meal".';
+    document.getElementById('plate-item-error').textContent = t('plateItemErrorMealName');
     document.getElementById('plate-item-error').hidden = false;
     return;
   }
@@ -255,9 +255,9 @@ async function handleFinishMeal() {
       meal_label: mealLabel,
       items: plateSession.items.map((i) => ({ food_item_id: i.food_item_id, name: i.name, weight: i.weight })),
     });
-    showToast(`Saved "${mealName}" as a quick-add meal`);
+    showToast(t('savedMealTemplateToast', mealName));
   } else {
-    showToast('Meal logged.');
+    showToast(t('mealLoggedToast'));
   }
 
   resetPlateSession();
@@ -265,7 +265,7 @@ async function handleFinishMeal() {
 }
 
 function handleCancelMeal() {
-  if (plateSession && plateSession.items.length && !confirm('Discard everything on the plate?')) return;
+  if (plateSession && plateSession.items.length && !confirm(t('discardPlateConfirm'))) return;
   resetPlateSession();
   showView('today');
 }
