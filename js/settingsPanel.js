@@ -88,6 +88,21 @@ async function handleImportData(evt) {
   try {
     const text = await file.text();
     const data = JSON.parse(text);
+
+    // A single item someone shared (see handleShareFoodItem in app.js),
+    // as opposed to a full library/log/settings backup — same Import
+    // button handles both, detected by exportType.
+    if (data && data.exportType === 'plate_food_item' && data.foodItem && data.foodItem.name) {
+      const name = displayFoodName(data.foodItem) || data.foodItem.name;
+      const dupes = await PlateDB.findFoodItemsByName(data.foodItem.name);
+      const confirmed = confirm(dupes.length > 0 ? t('importItemConfirmDuplicate', name) : t('importItemConfirm', name));
+      if (!confirmed) return;
+      await PlateDB.importSharedFoodItem(data.foodItem);
+      showFormStatus('backup-status', t('itemImported', name));
+      if (document.getElementById('view-library') && !document.getElementById('view-library').hidden) renderLibrary();
+      return;
+    }
+
     if (!data || (!data.foodItems && !data.logEntries && !data.settings)) {
       throw new Error(t('notAPlateBackup'));
     }

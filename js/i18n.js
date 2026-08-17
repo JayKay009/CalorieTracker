@@ -215,6 +215,15 @@ const STRINGS = {
     importConfirm: (foods, logs) => `Import ${foods} library items and ${logs} log entries? This merges with what's already here (matching IDs get overwritten).`,
     importFailed: (msg) => `Import failed: ${msg}`,
 
+    // Sharing a single item
+    shareFoodAria: 'Share this item',
+    shareLabel: 'Sharing items',
+    shareHint: 'Use the share icon on any item in your Library to send it to someone else — over WhatsApp, email, AirDrop, or however you like. They open Plate, tap Import above, and pick the file to add it to their own library.',
+    itemShareDownloaded: 'Item saved as a file — attach it in WhatsApp, email, etc.',
+    importItemConfirm: (name) => `Add "${name}" to your library?`,
+    importItemConfirmDuplicate: (name) => `You already have an item called "${name}". Add this one anyway as a separate entry?`,
+    itemImported: (name) => `"${name}" added to your library.`,
+
     // History view
     pastDaysEyebrow: 'Past days',
     historyHeading: 'History',
@@ -420,6 +429,15 @@ const STRINGS = {
     notAPlateBackup: 'Dit bestand lijkt geen Plate-back-up te zijn.',
     importConfirm: (foods, logs) => `${foods} bibliotheekitems en ${logs} logboekitems importeren? Dit wordt samengevoegd met wat er al is (overeenkomende ID's worden overschreven).`,
     importFailed: (msg) => `Importeren mislukt: ${msg}`,
+
+    // Eén item delen
+    shareFoodAria: 'Dit item delen',
+    shareLabel: 'Items delen',
+    shareHint: 'Gebruik het deel-icoon bij een item in je Bibliotheek om het naar iemand anders te sturen — via WhatsApp, e-mail, AirDrop, of wat je maar wilt. Diegene opent Plate, tikt hierboven op Importeren en kiest het bestand om het aan hun eigen bibliotheek toe te voegen.',
+    itemShareDownloaded: 'Item opgeslagen als bestand — voeg het toe in WhatsApp, e-mail, enz.',
+    importItemConfirm: (name) => `"${name}" toevoegen aan je bibliotheek?`,
+    importItemConfirmDuplicate: (name) => `Je hebt al een item met de naam "${name}". Dit item toch toevoegen als apart item?`,
+    itemImported: (name) => `"${name}" is toegevoegd aan je bibliotheek.`,
 
     pastDaysEyebrow: 'Vorige dagen',
     historyHeading: 'Geschiedenis',

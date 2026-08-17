@@ -161,6 +161,37 @@ const PlateDB = {
     return promisifyRequest(store.delete(id));
   },
 
+  // ---- Sharing a single item (WhatsApp/AirDrop/email/etc. between users) ----
+  /** Foods with the same name already in the library — used to warn on import, not to block it. */
+  async findFoodItemsByName(name) {
+    const items = await this.getAllFoodItems();
+    const n = (name || '').trim().toLowerCase();
+    if (!n) return [];
+    return items.filter((i) => (i.name || '').trim().toLowerCase() === n);
+  },
+
+  /**
+   * Adds a food item shared by another user (another browser/device) into
+   * this library. Always mints a fresh id/timestamps — the sender's id
+   * means nothing here and could collide with something local. Personal,
+   * non-transferable fields (favorite, last_used_at) are dropped too: they
+   * describe the sender's usage, not the recipient's.
+   */
+  async importSharedFoodItem(sharedItem) {
+    const store = await tx('foodItems', 'readwrite');
+    const now = new Date().toISOString();
+    const record = {
+      ...sharedItem,
+      id: uid(),
+      created_at: now,
+      updated_at: now,
+      favorite: false,
+    };
+    delete record.last_used_at;
+    await promisifyRequest(store.put(record));
+    return record;
+  },
+
   // ---- Settings ----
   async getSetting(key, fallback = null) {
     const store = await tx('settings');

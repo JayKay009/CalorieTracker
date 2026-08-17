@@ -297,6 +297,9 @@ function libraryRowHtml(item) {
         <button type="button" class="row-icon-btn" data-action="edit" data-id="${item.id}" aria-label="${t('editFoodAria')}">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
+        <button type="button" class="row-icon-btn" data-action="share" data-id="${item.id}" aria-label="${t('shareFoodAria')}">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+        </button>
         <div class="kcal">${kcalForServing}</div>
       </div>
     </div>`;
@@ -450,6 +453,8 @@ async function handleLibraryListClick(evt) {
     } else if (actionBtn.dataset.action === 'edit') {
       const item = await PlateDB.getFoodItem(id);
       if (item) openManualForm(item);
+    } else if (actionBtn.dataset.action === 'share') {
+      await handleShareFoodItem(id);
     } else if (actionBtn.dataset.action === 'delete-meal') {
       if (confirm(t('removeMealTemplateConfirm'))) {
         await PlateDB.deleteMealTemplate(id);
@@ -480,6 +485,83 @@ function wireLibraryListDelegation() {
       handleLibraryListClick(evt);
     }
   });
+}
+
+/* ============================================
+   Share a single library item (WhatsApp, AirDrop, email, etc.)
+
+   Produces the same "one food item" JSON shape that Import (see
+   settingsPanel.js) knows how to read — so no matter how the file
+   travels to the other person (chat app, USB, email attachment), tapping
+   Import on their end just adds it to their own library.
+   ============================================ */
+
+const SHARED_ITEM_EXPORT_TYPE = 'plate_food_item';
+
+/** Strips personal/local-only fields before handing an item to someone else's browser. */
+function buildShareableFoodItem(item) {
+  const { id, created_at, updated_at, favorite, last_used_at, ...shareable } = item;
+  return {
+    exportType: SHARED_ITEM_EXPORT_TYPE,
+    version: 1,
+    exported_at: new Date().toISOString(),
+    foodItem: shareable,
+  };
+}
+
+function slugify(str) {
+  return (
+    (str || 'food')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .slice(0, 40) || 'food'
+  );
+}
+
+function downloadJsonFile(json, filename) {
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function handleShareFoodItem(id) {
+  const item = await PlateDB.getFoodItem(id);
+  if (!item) return;
+
+  const payload = buildShareableFoodItem(item);
+  const json = JSON.stringify(payload, null, 2);
+  const filename = `plate-item-${slugify(displayFoodName(item))}.json`;
+
+  // Prefer the native share sheet (WhatsApp, Mail, AirDrop, Messages, ...)
+  // when the browser can share files — Android Chrome and iOS Safari
+  // 16.4+ support this. Everywhere else (most desktop browsers, older
+  // iOS), fall back to a plain download the user can attach by hand.
+  let file = null;
+  try {
+    file = new File([json], filename, { type: 'application/json' });
+  } catch {
+    // File constructor unsupported (very old browsers) — download fallback below handles it
+  }
+
+  if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: displayFoodName(item) });
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return; // user closed the share sheet — not a failure
+      // any other error: fall through to download below
+    }
+  }
+
+  downloadJsonFile(json, filename);
+  showToast(t('itemShareDownloaded'));
 }
 
 function escapeHtml(str) {
