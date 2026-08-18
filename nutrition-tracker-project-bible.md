@@ -8,7 +8,7 @@ A free, no-login website (hosted on GitHub Pages) for logging food and estimatin
 - Static hosting only (GitHub Pages) → no custom backend, no server-side code.
 - No accounts → all data lives in the browser itself.
 - Data must survive closing and reopening the browser (persist across sessions).
-- Must work consistently across browsers (Chrome, Brave, Firefox, Safari) — but each browser stores its own separate copy of the data, since there's no server to sync through. This is the one real tradeoff of the "no backend" approach and is called out explicitly so it's a known decision, not a surprise later.
+- Must work consistently across browsers (Chrome, Brave, Firefox, Safari) — but each browser stores its own separate copy of the data, since there's no server to sync through. This is the one real tradeoff of the "no backend" approach and is called out explicitly so it's a known decision, not a surprise later. (Item sharing, §3.10, is the manual workaround for moving individual items between browsers/devices/people without a backend.)
 
 ---
 
@@ -28,7 +28,7 @@ A free, no-login website (hosted on GitHub Pages) for logging food and estimatin
 
 ## 2.1 Decisions Locked In (v1)
 
-- **No daily goals in v1**, but the settings/data model leaves room to add optional calorie/macro targets later without restructuring anything.
+- **No daily goals in v1**, but the settings/data model leaves room to add optional calorie/macro targets later without restructuring anything. *(Superseded — see §3.6: per-macro daily goals are implemented, stored as individual settings keys so "no goal set" is just "key absent.")*
 - **Track everything** (calories, protein, carbs, fat, fiber, sugar, sodium) from the start — but **calories is the headline number** everywhere in the UI (largest, always visible); the rest are secondary/detail-level.
 - Visual style: open — Claude will propose a distinct direction rather than a generic template when building the UI.
 
@@ -52,6 +52,7 @@ A free, no-login website (hosted on GitHub Pages) for logging food and estimatin
 - Logging a repeat food becomes a search + tap, not re-entry.
 - Items can be edited or deleted from the library at any time.
 - "Recently used" and "Favorites" shortcuts for the most common foods.
+- Each library item also has a **Share** action (§3.10) for sending that one item to another person.
 
 ### 3.4 No-label / whole foods
 - Built-in starter database of common single-ingredient foods (chicken breast, eggs, rice, banana, olive oil, etc.) with per-100g values.
@@ -66,13 +67,16 @@ A free, no-login website (hosted on GitHub Pages) for logging food and estimatin
 
 ### 3.6 Daily/weekly summary
 - Running total for the day: calories, protein, carbs, fat (and fiber/sugar/sodium if tracked).
-- Optional personal daily targets (calorie/macro goals) set once in a profile/settings screen, compared against the day's total.
+- Optional personal daily targets (calorie/macro goals), set once in Settings, stored per-macro (`goal_calories`, `goal_protein`, `goal_carbs`, `goal_fat` — each independently optional).
+- **Calories**: when a calorie goal is set, the "today" screen shows a line stating kcal remaining (or over) against the goal.
+- **Macros**: each of the three macro pills (protein/carbs/fat) on the "today" screen also shows what **% of today's total macro calories** that macro represents — e.g. "112g · 27%" — always visible once anything is logged (hidden only when nothing's been logged yet today), and independent of any goal. Calculated calorie-weighted, matching how macro splits like "40/30/30" are conventionally expressed: `pct = macro's kcal / (protein_kcal + carbs_kcal + fat_kcal) * 100`, using 4 kcal/g for protein and carbs and 9 kcal/g for fat. Deliberately not a straight gram ratio — a gram of fat carries more than double the energy of a gram of protein/carbs, so a gram-based split would understate fat's real share of the day's energy. This is today-only; the history/day-detail view does not show percentages.
 - Simple history view / chart of past days.
 
 ### 3.7 Data persistence & portability
 - All data (library, logs, settings) stored in IndexedDB — persists across browser close/reopen automatically.
 - **Export/Import**: a "Backup" button that exports all data as a JSON file, and an "Import" button to restore it. This is the manual workaround for moving data between browsers or devices, since there's no account system.
 - Clear warning in-app: data is tied to *this browser on this device* — export before switching browsers/clearing site data.
+- The same Import control also accepts single shared items (§3.10) — it detects which kind of file it's given.
 
 ### 3.8 Meal Builder ("plate mode")
 
@@ -96,6 +100,26 @@ For building a meal directly off a kitchen scale, one item at a time, without re
 - Support both metric (g, ml) and common household units (tbsp, cup, oz) with conversion.
 - Per-100g baseline stored internally; displayed serving size is just a view/multiplier over that baseline, so scaling is always consistent.
 
+### 3.10 Sharing a single library item
+
+Lets one user hand a specific food item (their OCR'd/manual entry) to another user, so the recipient doesn't have to re-enter it from scratch. No backend involved — it's a JSON file that travels however the users like (WhatsApp, email, AirDrop, USB, etc.) and is read back in through the existing Import control.
+
+**Export (sender side):**
+- A share icon on each library row builds a JSON payload containing just that item: `{ exportType: "plate_food_item", version: 1, exported_at, foodItem: {...} }`.
+- `foodItem` is the item's data (name, brand, per-100g baseline, default serving, source) with personal/local-only fields stripped: no `id` (meaningless outside the sender's browser), no `created_at`/`updated_at`, no `favorite`, no `last_used_at`.
+- If the browser supports the Web Share API with file attachments (`navigator.share`/`navigator.canShare` with a `File`), the native share sheet opens directly — "Share to WhatsApp" etc. Otherwise the file downloads normally and the user attaches it manually.
+
+**Import (recipient side):**
+- The existing "Import" control (§3.7) now inspects the file's `exportType` to decide what it's looking at:
+  - `plate_food_item` → single-item import. Recipient is asked to confirm (shown the item's name); if an item with the same name already exists in their library, they're warned and can still choose to add it as a separate entry.
+  - Full backup shape (`foodItems`/`logEntries`/`settings`) → existing merge-import behavior, unchanged.
+- On import, a **fresh `id` is always minted** — the sender's id is never trusted, since it could collide with something already in the recipient's library. `favorite` resets to unset and `last_used_at` is dropped, since neither describes the recipient's usage.
+
+**Platform notes (Android vs. iOS):**
+- The core flow (file picker → JSON → Import) is identical everywhere; no platform restriction on it.
+- The one-tap native share sheet works on Android Chrome and iOS Safari 16.4+.
+- Registering the app as a **share target** — i.e. appearing as a destination when a file is shared *into* the app from another app like WhatsApp — is Android-only (Web Share Target API isn't available to iOS PWAs). Not implemented; treated as a nice-to-have, not a dependency. The "download → open Plate → tap Import → pick file" path is the universal fallback and works on every platform regardless.
+
 ---
 
 ## 4. Data Model (conceptual)
@@ -104,32 +128,37 @@ For building a meal directly off a kitchen scale, one item at a time, without re
 - id, name, brand (optional), source (`"ocr"` | `"manual"` | `"database"`), photo (optional, stored as blob/base64 in IndexedDB)
 - baseline: per 100g (or 100ml) — calories, protein_g, carbs_g, fat_g, fiber_g, sugar_g, sodium_mg
 - default_serving: amount + unit (e.g. "30 g", "1 cup")
+- favorite (bool), last_used_at (optional)
 - created_at, updated_at
 
 **LogEntry**
-- id, food_item_id, date, meal_label (breakfast/lunch/dinner/snack — optional), quantity, unit, calculated totals (derived from FoodItem baseline × quantity)
+- id, food_item_id, date, meal_label (breakfast/lunch/dinner/snack — optional), meal_group_id (optional, see §3.8), quantity, unit, calculated totals (derived from FoodItem baseline × quantity)
 
 **UserSettings**
-- daily targets (calories, protein, carbs, fat) — optional
+- daily targets, stored per-macro and independently optional: `goal_calories`, `goal_protein`, `goal_carbs`, `goal_fat`
 - units preference (metric/imperial default)
+
+**Shared-item export file (transient, not stored — see §3.10)**
+- `{ exportType: "plate_food_item", version, exported_at, foodItem }` where `foodItem` is a FoodItem stripped of `id`, `created_at`, `updated_at`, `favorite`, `last_used_at`.
 
 ---
 
 ## 5. Non-Functional Requirements
 
-- **Cross-browser correctness**: test on Chrome, Brave, Firefox, Safari (desktop + mobile) — IndexedDB and camera input APIs are all standard, but camera permission UX differs slightly by browser, so this needs real device testing, not just assumption.
+- **Cross-browser correctness**: test on Chrome, Brave, Firefox, Safari (desktop + mobile) — IndexedDB and camera input APIs are all standard, but camera permission UX differs slightly by browser, so this needs real device testing, not just assumption. The Web Share API (used for item sharing, §3.10) is treated as progressively-enhanced, not assumed: every browser that lacks it falls back to a plain file download.
 - **Mobile-first responsive design**: this will primarily be opened on a phone.
 - **Offline-friendly**: once loaded, logging/searching should work without a network connection (service worker caching); OCR already runs fully offline since Tesseract.js is client-side.
-- **Privacy**: since there's no backend, no food/photo data ever leaves the user's device — worth stating in-app as a feature, not just a limitation.
+- **Privacy**: since there's no backend, no food/photo data ever leaves the user's device unless the user explicitly shares an item themselves (§3.10) — worth stating in-app as a feature, not just a limitation.
 - **Performance**: OCR (Tesseract.js) can be slow-ish for a full-res photo — plan to downscale images before running OCR to keep it fast on a phone.
 
 ---
 
 ## 6. Known Tradeoffs (explicit, not hidden)
 
-1. **No cross-browser/cross-device sync.** Data lives per-browser. Mitigated by manual JSON export/import. A future upgrade path (if ever wanted) would be adding a free-tier backend (e.g. Firebase) purely for optional sync — not in scope now.
+1. **No automatic cross-browser/cross-device sync.** Data lives per-browser. Mitigated two ways: full-library JSON export/import (§3.7) for moving your own data between your own browsers/devices, and single-item sharing (§3.10) for handing one item to someone else. Both are manual/explicit, not background sync. A future upgrade path (if ever wanted) would be adding a free-tier backend (e.g. Firebase) purely for optional sync — not in scope now.
 2. **OCR accuracy varies** with photo quality/lighting/label design — this is why manual correction is a first-class part of the flow, not an edge case.
 3. **GitHub Pages is static-only** — anything that seems to need a server (e.g. calling a paid API with a private key) isn't possible without exposing the key publicly. We're sidestepping this by choosing client-side OCR and free/keyless or public-key-safe data sources.
+4. **Item sharing has no one-tap "receive" path on iOS.** Android can register the app as a share target so a file shared from WhatsApp can open directly into Plate's import; iOS has no equivalent API, so iOS recipients always go through a manual "save attachment → open Plate → tap Import" sequence. Not a blocker, just a small extra step on iOS.
 
 ---
 
@@ -142,6 +171,8 @@ For building a meal directly off a kitchen scale, one item at a time, without re
 5. **OCR capture flow**: camera/photo input → Tesseract.js → editable form → save.
 6. **Export/Import backup**.
 7. **Polish**: charts/trends, favorites, offline caching, settings/goals.
+8. **Item sharing** (§3.10): per-item share export + Import format detection. *(Built.)*
+9. **Macro calorie-split percentages** (§3.6): calorie-weighted % breakdown per macro on the "today" screen, independent of goals. *(Built.)*
 
 ---
 
@@ -163,4 +194,4 @@ None of this changes the app itself — same code runs anywhere. The only real r
 
 ## 9. Open Questions
 
-- None blocking — ready to start building. Anything that comes up (styling direction, exact starter whole-foods list, etc.) will get resolved as part of building rather than held up front.
+- None blocking. Possible future nice-to-haves noted but explicitly out of scope for now: Android share-target registration for item sharing (§3.10, §6.4), optional backend sync (§6.1).

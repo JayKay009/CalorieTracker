@@ -105,6 +105,8 @@ async function renderToday() {
   document.getElementById('today-carbs').textContent = `${round(totals.carbs)}g`;
   document.getElementById('today-fat').textContent = `${round(totals.fat)}g`;
 
+  renderMacroCalorieSplit(totals);
+
   const goals = await getDailyGoals();
   const goalLineEl = document.getElementById('today-goal-line');
   if (goals.calories) {
@@ -125,6 +127,43 @@ async function renderToday() {
 
   todayEntryCache = entries;
   listEl.innerHTML = groupTodayEntries(entries).map(todayRowHtml).join('');
+}
+
+/**
+ * Kcal-per-gram for each macro, used to turn grams logged today into each
+ * macro's share of today's macro calories — not tied to any goal.
+ */
+const MACRO_KCAL_PER_G = { protein: 4, carbs: 4, fat: 9 };
+
+/**
+ * Shows what % of today's macro calories each macro (protein/carbs/fat)
+ * represents so far — e.g. "40g · 36%" — independent of any goal, and
+ * always visible (0% once something's logged, hidden only before any
+ * macro has been logged at all today).
+ *
+ * Calorie-weighted, not gram-weighted: fat is 9 kcal/g vs. 4 kcal/g for
+ * protein/carbs, so a straight gram ratio would understate fat's actual
+ * share of the day's energy. percent = (macro's kcal) / (sum of all three
+ * macros' kcal) * 100.
+ */
+function renderMacroCalorieSplit(totals) {
+  const macroKcal = {
+    protein: totals.protein * MACRO_KCAL_PER_G.protein,
+    carbs: totals.carbs * MACRO_KCAL_PER_G.carbs,
+    fat: totals.fat * MACRO_KCAL_PER_G.fat,
+  };
+  const totalMacroKcal = macroKcal.protein + macroKcal.carbs + macroKcal.fat;
+
+  for (const key of ['protein', 'carbs', 'fat']) {
+    const el = document.getElementById(`today-${key}-pct`);
+    if (totalMacroKcal <= 0) {
+      el.hidden = true;
+      continue;
+    }
+    const pct = Math.round((macroKcal[key] / totalMacroKcal) * 100);
+    el.textContent = `${pct}%`;
+    el.hidden = false;
+  }
 }
 
 /**
